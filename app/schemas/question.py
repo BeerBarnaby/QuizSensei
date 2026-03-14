@@ -21,9 +21,9 @@ class QuestionGenerationRequest(BaseModel):
     number_of_questions: int = Field(default=3, ge=1, le=10)
     target_audience_level: str = Field(
         default="วัยทำงาน",
-        description="Target audience: 'ประถมศึกษา', 'มัธยมศึกษาตอนต้น', 'มัธยมศึกษาตอนปลาย', 'อุดมศึกษา', 'วัยทำงาน'"
+        description="Target audience: 'ประถม', 'มัธยมต้น', 'มัธยมปลาย', 'มหาวิทยาลัย', 'วัยทำงาน'"
     )
-    difficulty_filter: Optional[str] = Field(None, description="easy | medium | hard")
+    difficulty_filter: Optional[str] = Field(None, description="ง่าย | ปานกลาง | ยาก")
     topic_filter: Optional[str] = Field(None, description="Force a specific FL topic.")
     subtopic_filter: Optional[str] = Field(None, description="Force a specific FL subtopic.")
     additional_document_ids: List[str] = Field(

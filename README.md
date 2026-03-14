@@ -1,82 +1,65 @@
 # 🧠 EvalMind – AI-Powered Assessment Platform
 
-EvalMind คือแพลตฟอร์มวิเคราะห์เอกสารและสร้างข้อสอบอัตโนมัติ (AI-powered Assessment) ที่เน้นความรู้ด้าน **Financial Literacy (ทักษะทางการเงิน)** โดยใช้สถาปัตยกรรมแบบ **Multi-Agent AI Pipeline** เพื่อความแม่นยำและการตรวจสอบคุณภาพที่สูงสุด
+EvalMind คือแพลตฟอร์มวิเคราะห์เอกสารและสร้างข้อสอบอัตโนมัติ (AI-powered Assessment) ที่เน้นความรู้ด้าน **Financial Literacy (ทักษะทางการเงิน)** โดยใช้สถาปัตยกรรม **4-Agent LLM Pipeline** ที่ทำงานเป็นภาษาไทย 100%
 
 ---
 
-## 🚀 Key Features
+## 🚀 ฟีเจอร์หลัก (Key Features)
 
-### 1. NotebookLM-Style UI
-หน้าจอการใช้งานแบบ 2-Panel ที่ออกแบบมาให้ใช้งานง่ายในหน้าเดียว:
-- **Sidebar**: อัปโหลดเอกสาร (Drag & Drop) และดูรายชื่อเอกสารทั้งหมด
-- **Main Area**: แบ่งเป็น 4 Tabs (Extraction, Analysis, Quiz, Analytics)
+### 1. ระบบ 4-Agent LLM Pipeline (Thai-Only)
+กระบวนการทำงานถูกแบ่งเป็น 4 ขั้นตอนหลักโดยใช้ AI Agents เฉพาะทาง:
 
-### 2. 4-Agent AI Pipeline (OpenRouter)
-ระบบใช้ AI Agents 4 ตัวทำงานสอดประสานกันเพื่อสร้างข้อสอบที่มีคุณภาพระดับสูง:
-- **🕵️ Agent 1 (Analyzer)**: วิเคราะห์เนื้อหาเพื่อระบุ Topic, Sub-topic, ความยาก (Difficulty) และ **Bloom's Taxonomy Level**
-- **🎨 Agent 2 (Generator)**: สร้างข้อสอบ Multiple Choice พร้อม **Design Reasoning** (ทำไมถึงออกข้อนี้) และ **Distractor Map** (ทุกตัวเลือกที่ผิดต้องมี Misconception Tag กำกับ)
-- **⚖️ Agent 3 (Auditor)**: ตรวจสอบคุณภาพข้อสอบที่ Agent 2 สร้างขึ้น หากไม่ผ่านเกณฑ์จะ **Reject** ทันที เพื่อให้ผู้เรียนได้รับข้อสอบที่ดีที่สุด
-- **🎓 Agent 4 (Grader)**: ไม่ใช่แค่ตรวจถูก/ผิด แต่เป็นการ **วินิจฉัย (Diagnosis)** ว่าหากผู้เรียนตอบผิด เขา "เข้าใจผิดเรื่องอะไร" และควรทบทวนหัวข้อไหนต่อ
+- **🕵️ Agent 1 (Analyzer)**: วิเคราะห์หัวข้อ, จำแนกระดับผู้เรียน (ประถม - วัยทำงาน), และตรวจสอบ "ความเพียงพอของเนื้อหา" (Content Sufficiency) หากเนื้อหาไม่พอระบบจะหยุดทำงานทันทีเพื่อให้ผู้ใช้อัปโหลดเพิ่ม
+- **🎨 Agent 2 (Generator)**: สร้างข้อสอบปรนัยโดยอิงตามเนื้อหาเอกสาร + ระดับผู้เรียนและระดับความยากที่ผู้ใช้เลือกเอง (ง่าย/ปานกลาง/ยาก)
+- **⚖️ Agent 3 (Auditor)**: ตรวจสอบคุณภาพข้อสอบเชิงลึก ทั้งความแม่นยำ, การใช้ Bloom's Taxonomy, และคุณภาพของตัวเลือกหลอก (Distractors)
+- **🎓 Agent 4 (Grader)**: ตรวจคำตอบและให้ Feedback แบบวินิจฉัย (Diagnostic) เพื่ออธิบายเหตุผลว่าทำไมถึงถูกหรือผิด
+
+### 2. การแมกระดับความยากด้วย Bloom’s Taxonomy
+ระบบใช้ทฤษฎีการเรียนรู้อย่างเป็นระบบเพื่อให้ข้อสอบมีระดับความท้าทายที่เหมาะสม:
+- **ง่าย** -> เน้นการจำและความเข้าใจ (Remember / Understand)
+- **ปานกลาง** -> เน้นการประยุกต์ใช้และการวิเคราะห์ (Apply / Analyze)
+- **ยาก** -> เน้นการวิเคราะห์, การประเมินค่า และการสร้างสรรค์ (Analyze / Evaluate / Create)
+
+### 3. User-Driven Configuration
+ผู้ใช้ไม่ได้แค่รอดูผลลัพธ์ แต่สามารถกำหนดทิศทางของข้อสอบได้เอง:
+- เลือก "ระดับผู้เรียน" (Learner Level) ด้วยตัวเอง
+- เลือก "ระดับความยาก" (Difficulty) ด้วยตัวเอง
 
 ---
 
-## 🛠 Technology Stack
+## 🛠 เทคโนโลยีที่ใช้ (Tech Stack)
 - **Backend**: FastAPI (Python 3.12+)
-- **LLM Orchestration**: OpenRouter (GPT-4o, Claude 3.5 Sonnet, or other OSS models)
-- **Database**: PostgreSQL (SQLAlchemy + AsyncPG)
-- **Frontend**: Vanilla HTML5 / CSS3 (Glassmorphism Dark Theme) / JavaScript (ES6)
-- **Deployment**: Docker & Docker Compose
+- **LLM API**: OpenRouter (รองรับการทำ Stateful AI ผ่าน Responses API)
+- **Database**: PostgreSQL (SQLAlchemy + Asyncpg) & Redis
+- **Frontend**: Vanilla HTML5, CSS (Glassmorphism), JavaScript (SPA Concept)
+- **Extraction**: Support PDF, DOCX, TXT
 
 ---
 
-## 🏃 วิธีเริ่มใช้งาน (Local Setup)
+## 🏃 วิธีเริ่มใช้งานระบบ
 
-### 1. เตรียมสภาพแวดล้อม
-```bash
-# Clone project และเข้า directory
-cd Nectec26
-
-# สร้าง virtual environment
-python -m venv .venv
-.venv\Scripts\activate  # Windows
-# or: source .venv/bin/activate # Mac/Linux
-
-# ติดตั้ง dependencies
-pip install -r requirements.txt
-```
-
-### 2. ตั้งค่า Environment Variables
-สร้างไฟล์ `.env` (ดูตัวอย่างที่ `.env.example`) และระบุ `OPENROUTER_API_KEY`:
+### 1. ตั้งค่า Environment
+สร้างไฟล์ `.env` และระบุ API Key:
 ```env
-OPENROUTER_API_KEY=sk-or-v1-xxxx...
-OPENROUTER_MODEL=google/gemini-pro-1.5  # หรือโมเดลอื่น
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/evalmind
+OPENROUTER_API_KEYS=sk-or-v1-xxxx...
+OPENROUTER_MODEL=arcee-ai/trinity-large-preview:free 
+DATABASE_URL=postgresql+asyncpg://user:pass@db:5432/evalmind
 ```
 
-### 3. รัน Server
+### 2. รันระบบผ่าน Docker
 ```bash
-uvicorn app.main:app --reload
+docker compose up --build -d
 ```
-เปิด Browser ไปที่: **[http://localhost:8000](http://localhost:8000)**
+เข้าใช้งานได้ที่ **[http://localhost:8000](http://localhost:8000)**
 
 ---
 
-## 📂 Project Structure
-- **`app/routers/`**: Document management และ Exam/Analytics endpoints
-- **`app/services/agents/`**: หัวใจของระบบ (Auditor, Grader, Generator)
-- **`app/services/analyzers/`**: Agent 1 ที่ทำหน้าที่แยกประเภทเนื้อหา
-- **`app/schemas/`**: Data contracts สำหรับการคุยกันระหว่าง Agents และ Frontend
-- **`frontend/`**: หน้าจอผู้ใช้งานทั้งหมด (Single Page Application)
-- **`uploads/`, `sidecars/`**: พื้นที่จัดเก็บไฟล์และผลการวิเคราะห์ (Analysis/Questions) แบบ JSON
+## 📂 โครงสร้างโปรเจกต์ (Project Structure)
+- **`app/services/analyzers/`**: Agent 1 (Analyzer Logic)
+- **`app/services/generators/`**: Agent 2 (Question Generation)
+- **`app/services/agents/`**: Agent 3 (Auditor) และ Agent 4 (Grader)
+- **`app/routers/`**: API Endpoints (Documents, Exams)
+- **`frontend/`**: หน้าจอผู้ใช้งาน (Dark Mode & Premium UI)
 
 ---
-
-## 🔒 Security & Performance
-- **Deterministic Grading**: Agent 4 ใช้ข้อมูลวินิจฉัยที่ถูกคำนวณไว้แล้วจาก Agent 2 ทำให้การตรวจคำตอบรวดเร็วและประหยัด API Cost
-- **Async Workflow**: ใช้ `aiofiles` และ `AsyncSession` เพื่อรองรับการทำงานแบบ Non-blocking
-- **Safe Filenames**: ป้องกัน Path Traversal ในการจัดเก็บไฟล์
-
----
-
-## 📄 License
 © 2026 EvalMind Project. Developed for Advanced AI Assessment.

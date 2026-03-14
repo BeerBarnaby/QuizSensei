@@ -35,13 +35,13 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
 
     def _map_difficulty_to_blooms(self, difficulty: str) -> str:
         """แปลงความยากที่รับมาจาก UI เป็นทักษะและคำสั่งย่อยตามทฤษฎี Bloom"""
-        diff_lower = (difficulty or "medium").lower()
-        if diff_lower == "ง่าย" or diff_lower == "easy":
-            return "การจำ/ความเข้าใจ (Remembering/Understanding): คำถามวัดความจำนิยาม กฎพื้นฐาน หรือการอธิบายความหมายตรงๆ"
-        elif diff_lower == "ยาก" or diff_lower == "hard":
-            return "ประเมินค่า/สร้างสรรค์ (Evaluating/Creating): คำถามวัดการตัดสินใจเลือกทางเลือกที่ดีที่สุด การจัดลำดับความสำคัญ หรือการออกแบบแผนการเงิน ภายใต้ข้อจำกัดหลายอย่าง"
-        else: # medium
-            return "การประยุกต์ใช้/วิเคราะห์ (Applying/Analyzing): คำถามวัดการนำไปใช้ในสถานการณ์จำลอง การคำนวณ การเปรียบเทียบ หรือหาความสัมพันธ์ของตัวแปร"
+        diff_lower = (difficulty or "ปานกลาง").lower()
+        if diff_lower == "ง่าย":
+            return "การจำ/ความเข้าใจ (Remember / Understand): คำถามวัดความจำนิยาม กฎพื้นฐาน หรือการอธิบายความหมายตรงๆ"
+        elif diff_lower == "ยาก":
+            return "การวิเคราะห์/ประเมินค่า/สร้างสรรค์ (Analyze / Evaluate / Create): คำถามวัดการตัดสินใจเลือกทางเลือกที่ดีที่สุด การจัดลำดับความสำคัญ หรือการออกแบบแผนการเงิน ภายใต้ข้อจำกัดหลายอย่าง"
+        else: # ปานกลาง
+            return "การประยุกต์ใช้/วิเคราะห์ (Apply / Analyze): คำถามวัดการนำไปใช้ในสถานการณ์จำลอง การคำนวณ การเปรียบเทียบ หรือหาความสัมพันธ์ของตัวแปร"
 
     def _get_system_prompt(self, topic: str, subtopic: str, difficulty: str, target_audience: str, num_q: int) -> str:
         blooms_rule = self._map_difficulty_to_blooms(difficulty)
@@ -134,28 +134,39 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
             }
+
             dprompt = f"""
-            {system_prompt}
-            {user_prompt}
-            """
+{system_prompt}
+
+---
+{user_prompt}
+"""
+
             payload = {
                 "model": self.model,
                 "prompt": dprompt,
-                "temperature": 0.7,
-                "max_tokens": 4096
+                "temperature": 0.7
             }
+
+            print("=== PAYLOAD TO LLM (AGENT 2) ===")
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            print("================================")
 
             response = requests.post(url, json=payload, headers=headers, timeout=180)
             response.raise_for_status()
-            raw = response.json()['choices'][0]['text'].strip()
+            
+            resp_data = response.json()
+            
+            if "choices" not in resp_data or not resp_data["choices"]:
+                raise Exception(f"Invalid API Response: {resp_data}")
 
-            if raw.startswith("```json"):
-                raw = raw[7:]
-            if raw.startswith("```"):
-                raw = raw[3:]
-            if raw.endswith("```"):
-                raw = raw[:-3]
-            raw = raw.strip()
+            raw = resp_data['choices'][0]['text'].strip()
+
+            # Clean markdown code fences if present
+            if "```json" in raw:
+                raw = raw.split("```json")[1].split("```")[0].strip()
+            elif "```" in raw:
+                raw = raw.split("```")[1].split("```")[0].strip()
 
             questions = json.loads(raw)
             if not isinstance(questions, list):
@@ -173,7 +184,7 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
 
             return questions
 
-        except httpx.HTTPStatusError as e:
+        except requests.exceptions.HTTPError as e:
             logger.error(f"Agent 2 API Error: {e.response.text}")
             raise Exception(f"Agent 2 ล้มเหลวเนื่องจากการเชื่อมต่อ API: HTTP {e.response.status_code}")
         except json.JSONDecodeError as e:

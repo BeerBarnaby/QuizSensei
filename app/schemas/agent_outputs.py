@@ -15,7 +15,7 @@ class AnalyzerOutput(BaseModel):
     subtopic: str = Field(..., description="Specific FL sub-topic slug.")
     suggested_learner_level: str = Field(
         ..., 
-        description="Target audience level: 'ประถมศึกษา', 'มัธยมศึกษาตอนต้น', 'มัธยมศึกษาตอนปลาย', 'อุดมศึกษา', 'วัยทำงาน'."
+        description="Target audience level: 'ประถม', 'มัธยมต้น', 'มัธยมปลาย', 'มหาวิทยาลัย', 'วัยทำงาน'."
     )
     learner_level_reason: str = Field(..., description="Reason for the selected learner level in Thai.")
     content_sufficiency: bool = Field(..., description="True if content is sufficient to generate questions, False otherwise.")

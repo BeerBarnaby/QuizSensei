@@ -54,10 +54,10 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
 {taxonomy_str}
 
 ## กฎ 2: ระดับผู้เรียน (Learner Level)
-เลือกระดับของเนื้อหา 1 ระดับจาก {{"ประถมศึกษา", "มัธยมศึกษาตอนต้น", "มัธยมศึกษาตอนปลาย", "มหาวิทยาลัย", "วัยทำงาน"}}
-- ประถมศึกษา: ศัพท์ง่ายๆ กิจวัตรประจำวัน กระปุกออมสิน
-- มัธยมศึกษาตอนต้น: ค่าขนม การออมเบื้องต้น
-- มัธยมศึกษาตอนปลาย: เริ่มมีคอนเซปต์ซับซ้อนขึ้น แผนการใช้เงิน อัตราดอกเบี้ยพื้นฐาน
+เลือกระดับของเนื้อหา 1 ระดับจาก {{"ประถม", "มัธยมต้น", "มัธยมปลาย", "มหาวิทยาลัย", "วัยทำงาน"}}
+- ประถม: ศัพท์ง่ายๆ กิจวัตรประจำวัน กระปุกออมสิน
+- มัธยมต้น: ค่าขนม การออมเบื้องต้น
+- มัธยมปลาย: เริ่มมีคอนเซปต์ซับซ้อนขึ้น แผนการใช้เงิน อัตราดอกเบี้ยพื้นฐาน
 - มหาวิทยาลัย: เครดิต การลงทุนพื้นฐาน แนวคิดที่เฉพาะทางยิ่งขึ้น
 - วัยทำงาน: ภาษี ประกันสังคม การเกษียณ เงินเฟ้อ โครงสร้างหนี้
 
@@ -98,30 +98,41 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
             }
+            
             dprompt = f"""
-            {self._get_system_prompt()}
-            ข้อความสำหรับวิเคราะห์:
-            {truncated}
-            """
+{self._get_system_prompt()}
+
+---
+ข้อความสำหรับวิเคราะห์:
+{truncated}
+"""
+            
             payload = {
                 "model": self.model,
                 "prompt": dprompt,
-                "temperature": 0.3,
-                "max_tokens": 1024
+                "temperature": 0.1
             }
+
+            print("=== PAYLOAD TO LLM (AGENT 1) ===")
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            print("================================")
 
             response = requests.post(url, json=payload, headers=headers, timeout=60)
             response.raise_for_status()
-            raw = response.json()['choices'][0]['text'].strip()
+            
+            resp_data = response.json()
+            
+            if "choices" not in resp_data or not resp_data["choices"]:
+                raise Exception(f"Invalid API Response: {resp_data}")
+                
+            raw = resp_data['choices'][0]['text'].strip()
 
-            if raw.startswith("```json"):
-                raw = raw[7:]
-            if raw.startswith("```"):
-                raw = raw[3:]
-            if raw.endswith("```"):
-                raw = raw[:-3]
-            raw = raw.strip()
-
+            # Clean markdown code fences if present
+            if "```json" in raw:
+                raw = raw.split("```json")[1].split("```")[0].strip()
+            elif "```" in raw:
+                raw = raw.split("```")[1].split("```")[0].strip()
+            
             parsed = json.loads(raw)
             parsed.setdefault("status", "success")
             parsed.setdefault("message", "Analyzed successfully")
@@ -130,7 +141,7 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
 
             return parsed
 
-        except httpx.HTTPStatusError as e:
+        except requests.exceptions.HTTPError as e:
             logger.error(f"Agent 1 API Error: {e.response.text}")
             return {
                 "topic": "unknown",

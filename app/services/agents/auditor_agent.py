@@ -99,41 +99,56 @@ class AuditorAgent:
 
         user_prompt = (
             f"เริ่มตรวจสอบข้อสอบ 4 ตัวเลือกภาษาไทย ทั้งหมด {len(questions)} ข้อ.\n\n"
+            f"--- ข้อมูลบริบทที่ใช้ตรวจสอบ ---\n"
+            f"ระดับผู้เรียนที่เลือก: {audience}\n"
+            f"ระดับความยากที่เลือก: {difficulty}\n\n"
+            f"--- รายการข้อสอบ ---\n"
             f"{json.dumps(audit_payload, ensure_ascii=False, indent=2)}\n\n"
             "ส่งกลับเป็น Array JSON ของผลลัพธ์การ Audit เท่านั้น"
         )
 
         import requests
         try:
-            logger.info(f"Agent 3 กำลังออดิทข้อสอบ {len(questions)} ข้อ สำหรับระดัย {audience}")
+            logger.info(f"Agent 3 กำลังออดิทข้อสอบ {len(questions)} ข้อ สำหรับระดับ {audience}")
 
             url = "https://openrouter.ai/api/v1/completions"
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
             }
+
             dprompt = f"""
-            {system_prompt}
-            {user_prompt}
-            """
+{system_prompt}
+
+---
+{user_prompt}
+"""
+
             payload = {
                 "model": self.model,
                 "prompt": dprompt,
-                "temperature": 0.1,
-                "max_tokens": 1024
+                "temperature": 0.1
             }
+
+            print("=== PAYLOAD TO LLM (AGENT 3) ===")
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            print("================================")
 
             response = requests.post(url, json=payload, headers=headers, timeout=90)
             response.raise_for_status()
-            raw = response.json()['choices'][0]['text'].strip()
 
-            if raw.startswith("```json"):
-                raw = raw[7:]
-            if raw.startswith("```"):
-                raw = raw[3:]
-            if raw.endswith("```"):
-                raw = raw[:-3]
-            raw = raw.strip()
+            resp_data = response.json()
+            
+            if "choices" not in resp_data or not resp_data["choices"]:
+                raise Exception(f"Invalid API Response: {resp_data}")
+
+            raw = resp_data['choices'][0]['text'].strip()
+
+            # Clean markdown code fences if present
+            if "```json" in raw:
+                raw = raw.split("```json")[1].split("```")[0].strip()
+            elif "```" in raw:
+                raw = raw.split("```")[1].split("```")[0].strip()
 
             audit_results: List[Dict] = json.loads(raw)
 
@@ -152,7 +167,7 @@ class AuditorAgent:
 
             return questions
 
-        except httpx.HTTPStatusError as e:
+        except requests.exceptions.HTTPError as e:
             logger.error(f"Agent 3 API Error: {e.response.text}")
             for q in questions:
                 q.setdefault("audit_status", "rejected")

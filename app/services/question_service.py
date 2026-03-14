@@ -76,11 +76,11 @@ class QuestionGenerationService:
         is_sufficient = analysis_data.get("content_sufficiency", False)
         if not is_sufficient and not request.additional_document_ids:
             msg = analysis_data.get("sufficiency_reason", "เนื้อหาไม่เพียงพอที่จะสร้างข้อสอบได้")
-            rec = analysis_data.get("recommended_next_action", "กรุณาอัปโหลดเอกสารเพิ่มเติม")
+            rec = analysis_data.get("recommended_next_action", "กรุณาอัปโหลดเอกสารที่มีเนื้อหาทางการเงินดรายอื่นเพิ่มเติม")
             logger.warning(f"Generation blocked for {document_id}: {msg}")
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"{msg} ({rec})"
+                detail=f"ระบบหยุดการสร้างข้อสอบ: {msg} ({rec})"
             )
 
         text = extraction_data.get("extracted_text", "")

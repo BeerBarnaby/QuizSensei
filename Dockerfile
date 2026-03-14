@@ -32,6 +32,11 @@ WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Install system dependencies for OCR
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy application source
 COPY app/ ./app/
 COPY frontend/ ./frontend/
