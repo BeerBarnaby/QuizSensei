@@ -1,0 +1,168 @@
+"""
+app/services/analyzers/llm_financial_literacy_analyzer.py
+
+Agent 1: Analyzer
+Classifies the document by FL topic/subtopic, Target Learner Level, and evaluates Content Sufficiency for question generation.
+All output must be strictly in Thai.
+"""
+
+import json
+import random
+import logging
+from typing import Dict, Any
+import httpx
+
+from app.core.config import Settings
+from app.services.analyzers.base import BaseAnalyzer
+from app.schemas.agent_outputs import AnalyzerOutput
+
+logger = logging.getLogger(__name__)
+
+
+class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
+    """
+    Agent 1 – วิเคราะห์เอกสาร (Analyzer)
+    วิเคราะห์และจัดกลุ่มเนื้อหา ประเมินระดับผู้เรียน และตรวจสอบความเพียงพอของเนื้อหา
+    ผลลัพธ์ทั้งหมดอธิบายเป็นภาษาไทย
+    """
+
+    FL_TAXONOMY = {
+        "budgeting_and_spending": ["needs_vs_wants", "fixed_vs_variable_expenses", "monthly_budgeting"],
+        "saving_and_emergency_fund": ["savings_goals", "emergency_fund", "delayed_gratification"],
+        "credit_and_debt": ["credit_cards", "interest_and_repayment", "good_vs_bad_debt"],
+        "risk_and_insurance": ["financial_risk", "insurance_basics", "protection_planning"],
+        "investment_basics": ["risk_return", "simple_investing", "diversification_basics"],
+        "consumer_rights_and_financial_fraud": ["scam_awareness", "digital_finance_safety", "consumer_protection"],
+    }
+
+    def __init__(self, settings: Settings):
+        self.settings = settings
+        self.model = settings.OPENROUTER_MODEL
+        self.api_key = random.choice(settings.openrouter_keys_list) if settings.openrouter_keys_list else "dummy"
+
+    def _get_system_prompt(self) -> str:
+        taxonomy_str = "\n".join(
+            f"  {i+1}. {topic}: [{', '.join(subs)}]"
+            for i, (topic, subs) in enumerate(self.FL_TAXONOMY.items())
+        )
+        return f"""คุณคือ Agent 1 (Analyzer) ของแพลตฟอร์ม EvalMind
+
+หน้าที่ของคุณคือวิเคราะห์อัปโหลดเนื้อหาเอกสาร (ภาษาไทย 100%) แล้วตอบกลับเป็นโครงสร้าง JSON ทันที
+
+## กฎ 1: หมวดหมู่ (Taxonomy)
+พิจารณาเนื้อหาว่าเข้าข่ายหมวดหมู่ใดที่สุดจากลิสต์นี้:
+{taxonomy_str}
+
+## กฎ 2: ระดับผู้เรียน (Learner Level)
+เลือกระดับของเนื้อหา 1 ระดับจาก {{"ประถมศึกษา", "มัธยมศึกษาตอนต้น", "มัธยมศึกษาตอนปลาย", "มหาวิทยาลัย", "วัยทำงาน"}}
+- ประถมศึกษา: ศัพท์ง่ายๆ กิจวัตรประจำวัน กระปุกออมสิน
+- มัธยมศึกษาตอนต้น: ค่าขนม การออมเบื้องต้น
+- มัธยมศึกษาตอนปลาย: เริ่มมีคอนเซปต์ซับซ้อนขึ้น แผนการใช้เงิน อัตราดอกเบี้ยพื้นฐาน
+- มหาวิทยาลัย: เครดิต การลงทุนพื้นฐาน แนวคิดที่เฉพาะทางยิ่งขึ้น
+- วัยทำงาน: ภาษี ประกันสังคม การเกษียณ เงินเฟ้อ โครงสร้างหนี้
+
+## กฎ 3: ความเพียงพอของเนื้อหา (Content Sufficiency) **(สำคัญมาก)**
+เอกสารนี้มี "เนื้อหาเพียงพอ" ที่จะนำไปตั้งคำถามเจาะลึก 3-5 ข้อไหม?
+- ถ้าสั้นเกินไป (เช่นมีประโยคเดียว หรือแค่หัวข้อเนื้อหาเปล่าๆ) -> content_sufficiency: false
+- ขาดความรู้หรือคำนิยามหรือหลักการปฏิบัติที่ชัดเจน (เช่นเป็นแค่แชทพูดคุยทั่วไป) -> content_sufficiency: false
+- ไม่เกี่ยวกับการเงินการลงทุนจริงๆ เลย -> content_sufficiency: false
+- มีข้อมูลเพียงพอ มีนิยาม หลักการ หรือตัวอย่างเชิงลึก -> content_sufficiency: true
+
+## กฎ 4: รูปแบบ JSON Output ที่บังคับใช้
+กรุณาส่งกลับแค่ JSON ที่ตรงกับรูปแบบล่างนี้เท่านั้น ห้ามใช้ Markdown code fences ถ้าข้อมูลไหนไม่ระบุให้เป็นสตริงว่างหรือ None
+
+{{
+  "topic": "<topic ภาษาอังกฤษตาม Taxonomy ด้านบน>",
+  "subtopic": "<subtopic ภาษาอังกฤษตาม Taxonomy ด้านบน>",
+  "suggested_learner_level": "<1 ใน 5 ระดับภาษาไทย>",
+  "learner_level_reason": "<คำอธิบายภาษาไทยชี้แจงเหตุผลว่าทำไมถึงเลือกระดับนี้ 1-2 ประโยค>",
+  "content_sufficiency": <true / false>,
+  "sufficiency_reason": "<คำอธิบายภาษาไทย ระบุว่าเนื้อหานี้ลึกหรือยาวพอจะออกข้อสอบหรือไม่>",
+  "should_upload_more_documents": <true ถ้า sufficiency เป็น false, ไม่เช่นนั้นให้ false>,
+  "recommended_next_action": "<คำแนะนำสั้นๆ ภาษาไทย เช่น 'เริ่มสร้างแบบทดสอบได้เลย' หรือ 'กรุณาอัปโหลดเอกสารที่มีเนื้อหาเชิงลึกเพิ่มเติม'>",
+  "status": "success",
+  "message": "<ข้อความแสดงสถานะแจ้งผู้ใช้ ภาษาไทย เช่น 'วิเคราะห์เนื้อหาสำเร็จและพร้อมใช้งาน' หรือ 'เนื้อหาไม่เพียงพอ'>",
+  "keywords_found": ["<คำสำคัญในบทความ 1>", "<คำสำคัญ 2>"]
+}}
+"""
+
+    async def analyze(self, text: str) -> Dict[str, Any]:
+        """Agent 1 pipeline: classify document and evaluate sufficiency."""
+        max_chars = 30_000
+        truncated = text[:max_chars]
+
+        import requests
+        try:
+            url = "https://openrouter.ai/api/v1/completions"
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            dprompt = f"""
+            {self._get_system_prompt()}
+            ข้อความสำหรับวิเคราะห์:
+            {truncated}
+            """
+            payload = {
+                "model": self.model,
+                "prompt": dprompt,
+                "temperature": 0.3,
+                "max_tokens": 1024
+            }
+
+            response = requests.post(url, json=payload, headers=headers, timeout=60)
+            response.raise_for_status()
+            raw = response.json()['choices'][0]['text'].strip()
+
+            if raw.startswith("```json"):
+                raw = raw[7:]
+            if raw.startswith("```"):
+                raw = raw[3:]
+            if raw.endswith("```"):
+                raw = raw[:-3]
+            raw = raw.strip()
+
+            parsed = json.loads(raw)
+            parsed.setdefault("status", "success")
+            parsed.setdefault("message", "Analyzed successfully")
+            parsed.setdefault("analyzed_char_count", len(truncated))
+            parsed.setdefault("document_id", "")
+
+            return parsed
+
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Agent 1 API Error: {e.response.text}")
+            return {
+                "topic": "unknown",
+                "subtopic": "unknown",
+                "suggested_learner_level": "วัยทำงาน",
+                "learner_level_reason": "ไม่สามารถวิเคราะห์ระดัยชั้นได้จากระบบ",
+                "content_sufficiency": False,
+                "sufficiency_reason": f"ระบบตอบสนองผิดพลาด: HTTP {e.response.status_code}",
+                "should_upload_more_documents": True,
+                "recommended_next_action": "กรุณาตรวจสอบเครือข่ายแล้วลองอัปโหลดอีกครั้ง",
+                "status": "failed",
+                "message": f"API ล้มเหลว: HTTP {e.response.status_code}",
+                "keywords_found": [],
+                "analyzed_char_count": len(truncated)
+            }
+        except json.JSONDecodeError as e:
+            logger.error(f"Agent 1 JSON parse error: {e}")
+            return {
+                "topic": "unknown",
+                "subtopic": "unknown",
+                "suggested_learner_level": "วัยทำงาน",
+                "learner_level_reason": "ไม่สามารถวิเคราะห์ระดัยชั้นได้จากระบบ",
+                "content_sufficiency": False,
+                "sufficiency_reason": "ระบบขัดข้องไม่สามารถทำความเข้าใจเนื้อหาได้",
+                "should_upload_more_documents": True,
+                "recommended_next_action": "กรุณาจัดรูปแบบข้อความในเอกสารให้ชัดเจนขึ้นแล้วลองอัปโหลดอีกครั้ง",
+                "status": "failed",
+                "message": f"ประมวลผล JSON ล้มเหลว: {e}",
+                "keywords_found": [],
+                "analyzed_char_count": len(truncated)
+            }
+        except Exception as e:
+            logger.error(f"Agent 1 failed: {e}")
+            raise Exception(f"Agent 1 ทำงานล้มเหลว: {str(e)}")
+

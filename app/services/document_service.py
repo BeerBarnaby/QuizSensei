@@ -1,0 +1,162 @@
+"""
+app/services/document_service.py
+
+Service layer for handling document logic and extraction orchestration.
+Decouples business logic from HTTP route handlers.
+"""
+
+import json
+from pathlib import Path
+from typing import Dict, Any, Optional
+
+import aiofiles
+from fastapi import HTTPException, status
+
+from app.core.config import Settings
+from app.services.extractors.txt_extractor import TxtExtractor
+from app.services.extractors.pdf_extractor import PdfExtractor
+from app.services.extractors.docx_extractor import DocxExtractor
+
+
+class DocumentService:
+    """Provides business logic for managing, extracting, and previewing documents."""
+
+    def __init__(self, settings: Settings):
+        self.settings = settings
+
+        # Strategy map for extractors based on file extension
+        self.extractors = {
+            ".txt": TxtExtractor(),
+            ".pdf": PdfExtractor(),
+            ".docx": DocxExtractor(),
+        }
+
+    def _get_document_path(self, document_id: str) -> Path:
+        """Returns bounds-safe path to the uploaded document."""
+        # Note: In Phase 1 we already sanitised the filename during upload.
+        # But we must ensure users cannot pass paths like ../../ in document_id.
+        safe_id = Path(document_id).name
+        return self.settings.UPLOAD_DIR / safe_id
+
+    def _get_sidecar_path(self, document_id: str) -> Path:
+        """Returns the path where the JSON extraction result will be stored."""
+        safe_id = Path(document_id).name
+        # Store as uuid_filename.ext.json
+        return self.settings.EXTRACTED_DIR / f"{safe_id}.json"
+
+    async def extract_document(self, document_id: str) -> Dict[str, Any]:
+        """
+        Extracts content from a document using the appropriate strategy and
+        saves a JSON sidecar file containing metadata + full text.
+        Returns the metadata dict (without full text) to the caller.
+        """
+        doc_path = self._get_document_path(document_id)
+        if not doc_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found."
+            )
+
+        ext = doc_path.suffix.lower()
+
+        # Handle unsupported files gracefully without throwing 500s
+        if ext == ".doc":
+            return await self._save_and_return_failed_result(
+                document_id, ext, "Parsing not supported for .doc files yet."
+            )
+            
+        if ext not in self.extractors:
+            return await self._save_and_return_failed_result(
+                document_id, ext, f"No extractor available for {ext}."
+            )
+
+        extractor = self.extractors[ext]
+        
+        try:
+            # Execute strategy
+            extracted_text = await extractor.extract_text(doc_path)
+            
+            # Prepare result dictionary
+            result = {
+                "document_id": document_id,
+                "filename": document_id, # Can be enhanced in DB phase
+                "extension": ext,
+                "extraction_status": "success",
+                "char_count": len(extracted_text),
+                "extracted_text": extracted_text,
+                "message": None
+            }
+        except Exception as e:
+            # Extraction failure (bad encoding, corrupted PDF, etc.)
+            return await self._save_and_return_failed_result(
+                document_id, ext, f"Extraction failed: {str(e)}"
+            )
+
+        # Persist sidecar JSON
+        sidecar_path = self._get_sidecar_path(document_id)
+        
+        async with aiofiles.open(sidecar_path, "w", encoding="utf-8") as f:
+            await f.write(json.dumps(result, ensure_ascii=False, indent=2))
+
+        # Return metadata (exclude the raw bulk text payload)
+        return self._strip_text(result)
+
+    async def _save_and_return_failed_result(self, document_id: str, ext: str, message: str) -> Dict[str, Any]:
+        """Helper to return and persist a failed extraction state."""
+        result = {
+            "document_id": document_id,
+            "filename": document_id,
+            "extension": ext,
+            "extraction_status": "failed",
+            "char_count": 0,
+            "extracted_text": None,
+            "message": message
+        }
+        sidecar_path = self._get_sidecar_path(document_id)
+        async with aiofiles.open(sidecar_path, "w", encoding="utf-8") as f:
+            await f.write(json.dumps(result, indent=2))
+        return self._strip_text(result)
+
+    def _strip_text(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """Returns a copy of the dict with the heavy extracted_text removed."""
+        metadata = result.copy()
+        metadata.pop("extracted_text", None)
+        return metadata
+
+    async def get_document_content(self, document_id: str) -> Dict[str, Any]:
+        """Returns the full JSON containing metadata and all extracted_text."""
+        sidecar_path = self._get_sidecar_path(document_id)
+        if not sidecar_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Extraction data not found. Please extract the document first."
+            )
+
+        async with aiofiles.open(sidecar_path, "r", encoding="utf-8") as f:
+            content = await f.read()
+            return json.loads(content)
+
+    async def get_document_preview(self, document_id: str, max_chars: int = 500) -> Dict[str, Any]:
+        """Returns metadata + a truncated preview snippet of the extracted_text."""
+        full_content = await self.get_document_content(document_id)
+        
+        preview_text = None
+        if full_content.get("extracted_text"):
+            preview_text = full_content["extracted_text"][:max_chars]
+            if len(full_content["extracted_text"]) > max_chars:
+                preview_text += "..."
+
+        return {
+            "document_id": full_content["document_id"],
+            "filename": full_content["filename"],
+            "extension": full_content["extension"],
+            "extraction_status": full_content["extraction_status"],
+            "char_count": full_content["char_count"],
+            "preview_text": preview_text,
+            "message": full_content["message"]
+        }
+
+    async def get_document_metadata(self, document_id: str) -> Dict[str, Any]:
+        """Returns just the metadata stats of a past extraction."""
+        full_content = await self.get_document_content(document_id)
+        return self._strip_text(full_content)

@@ -1,0 +1,73 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime # Use the lean runtime stage
+    container_name: evalmind_api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - UPLOAD_DIR=/app/uploads
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      # Persist uploads outside the container so files survive restarts
+      - uploads_data:/app/uploads
+      # Mount source for live-reload during development
+      - ./app:/app/app:ro
+      - ./frontend:/app/frontend:ro
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    container_name: evalmind_db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-evalmind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-evalmind_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-evalmind_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-evalmind} -d ${POSTGRES_DB:-evalmind_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: evalmind_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  uploads_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
