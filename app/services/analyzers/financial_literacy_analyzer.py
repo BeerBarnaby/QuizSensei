@@ -1,7 +1,7 @@
 """
 app/services/analyzers/financial_literacy_analyzer.py
 
-Concrete implementation of BaseAnalyzer tailored for the EvalMind Financial Literacy prototype.
+Concrete implementation of BaseAnalyzer tailored for the QuizSensei Financial Literacy prototype.
 Classifies text into specific topics, subtopics, and difficulty levels, and generates
 bilingual candidate learning objectives.
 """

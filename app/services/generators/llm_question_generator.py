@@ -128,6 +128,9 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
         full_prompt = f"{system_prompt}\n\n{user_prompt}"
 
         try:
+            logger.info("============== AGENT 2 PROMPT START ==============")
+            logger.info(full_prompt)
+            logger.info("============== AGENT 2 PROMPT END ==============")
             logger.info(f"Agent 2 เริ่มสร้างข้อสอบ {num_q} ข้อสำหรับระดับ {audience} ความยาก {difficulty}")
 
             questions = call_openrouter_json(

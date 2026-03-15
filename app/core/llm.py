@@ -54,20 +54,40 @@ def call_openrouter_completions(
         "max_tokens": max_tokens
     }
 
+    # ── [LOG BEFORE SENDING] ──────────────────────────────────────────
+    logger.info("============== LLM REQUEST START ==============")
+    logger.info(f"URL: {url}")
+    logger.info(f"Model: {target_model}")
+    logger.info(f"Prompt Length: {len(prompt)} chars")
+    # logger.info(f"Full Prompt Sent:\n{prompt}") # Selective: can be very large
+    logger.info("===============================================")
+
     try:
         response = requests.post(url, json=payload, headers=headers, timeout=timeout)
+        
+        # ── [LOG AFTER RECEIVING] ────────────────────────────────────────
+        logger.info(f"LLM RESPONSE STATUS: {response.status_code}")
+        
         if response.status_code != 200:
-            logger.error(f"LLM API Error: {response.status_code} - {response.text}")
+            logger.error(f"LLM API Error Body: {response.text}")
             return None
 
         result = response.json()
+        logger.info("============== LLM RESPONSE PARTIAL ==============")
+        # Log first 500 chars of result for debugging
+        logger.info(f"Raw JSON result keys: {list(result.keys())}")
+        
         if "choices" in result and len(result["choices"]) > 0:
             choice = result["choices"][0]
-            # Handle both completions (.text) and chat-completions fallback (.message.content)
             raw_text = choice.get("text") or choice.get("message", {}).get("content")
-            return raw_text.strip() if raw_text else None
-        
-        logger.error(f"Unexpected Response Format: {result}")
+            
+            if raw_text:
+                logger.info(f"Received Text Length: {len(raw_text)}")
+                logger.info(f"Snippet (first 300): {raw_text[:300]}...")
+                logger.info("================================================")
+                return raw_text.strip()
+            
+        logger.error(f"No text found in response: {result}")
         return None
 
     except Exception as e:
@@ -83,13 +103,26 @@ def call_openrouter_json(
     """Calls completions, cleans markdown fences, and parses JSON result."""
     raw = call_openrouter_completions(prompt, model, temperature, max_tokens)
     if not raw:
+        logger.error("LLM returned no content or failed.")
         return None
         
     cleaned = clean_json_string(raw)
     try:
-        return json.loads(cleaned)
+        data = json.loads(cleaned)
+        logger.debug("Successfully parsed JSON from LLM.")
+        return data
     except json.JSONDecodeError as e:
-        logger.error(f"JSON Decode Error: {e}\nRaw content: {raw[:500]}")
+        logger.error(f"JSON Decode Error @ {e.lineno}:{e.colno} - {e.msg}")
+        logger.error(f"First 1000 chars of raw content: {raw[:1000]}")
+        # Try to find the start of the JSON array/object if cleaning failed
+        try:
+            start_idx = cleaned.find('[') if '[' in cleaned else cleaned.find('{')
+            end_idx = cleaned.rfind(']') if ']' in cleaned else cleaned.rfind('}')
+            if start_idx != -1 and end_idx != -1:
+                logger.info("Retrying JSON parse by finding delimiters...")
+                return json.loads(cleaned[start_idx:end_idx+1])
+        except:
+            pass
         return None
 
 def call_openrouter_vision(

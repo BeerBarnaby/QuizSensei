@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # ── Application ───────────────────────────────────────────────────────
-    APP_NAME: str = "EvalMind"
+    APP_NAME: str = "QuizSensei"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
 

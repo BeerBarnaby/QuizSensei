@@ -1,5 +1,5 @@
 /**
- * app.js – EvalMind Frontend
+ * app.js – QuizSensei Frontend
  * Light Mode | Multi-Doc | Automated Pipeline with clear UX
  */
 
