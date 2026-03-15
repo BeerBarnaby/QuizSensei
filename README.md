@@ -1,65 +1,86 @@
-# 🧠 QuizSensei – AI-Powered Assessment Platform
+# QuizSensei: AI-Powered Educational Assessment Framework
 
-QuizSensei คือแพลตฟอร์มวิเคราะห์เอกสารและสร้างข้อสอบอัตโนมัติ (AI-powered Assessment) ที่เน้นความรู้ด้าน **Financial Literacy (ทักษะทางการเงิน)** โดยใช้สถาปัตยกรรม **4-Agent LLM Pipeline** ที่ทำงานเป็นภาษาไทย 100%
-
----
-
-## 🚀 ฟีเจอร์หลัก (Key Features)
-
-### 1. ระบบ 4-Agent LLM Pipeline (Thai-Only)
-กระบวนการทำงานถูกแบ่งเป็น 4 ขั้นตอนหลักโดยใช้ AI Agents เฉพาะทาง:
-
-- **🕵️ Agent 1 (Analyzer)**: วิเคราะห์หัวข้อ, จำแนกระดับผู้เรียน (ประถม - วัยทำงาน), และตรวจสอบ "ความเพียงพอของเนื้อหา" (Content Sufficiency) หากเนื้อหาไม่พอระบบจะหยุดทำงานทันทีเพื่อให้ผู้ใช้อัปโหลดเพิ่ม
-- **🎨 Agent 2 (Generator)**: สร้างข้อสอบปรนัยโดยอิงตามเนื้อหาเอกสาร + ระดับผู้เรียนและระดับความยากที่ผู้ใช้เลือกเอง (ง่าย/ปานกลาง/ยาก)
-- **⚖️ Agent 3 (Auditor)**: ตรวจสอบคุณภาพข้อสอบเชิงลึก ทั้งความแม่นยำ, การใช้ Bloom's Taxonomy, และคุณภาพของตัวเลือกหลอก (Distractors)
-- **🎓 Agent 4 (Grader)**: ตรวจคำตอบและให้ Feedback แบบวินิจฉัย (Diagnostic) เพื่ออธิบายเหตุผลว่าทำไมถึงถูกหรือผิด
-
-### 2. การแมกระดับความยากด้วย Bloom’s Taxonomy
-ระบบใช้ทฤษฎีการเรียนรู้อย่างเป็นระบบเพื่อให้ข้อสอบมีระดับความท้าทายที่เหมาะสม:
-- **ง่าย** -> เน้นการจำและความเข้าใจ (Remember / Understand)
-- **ปานกลาง** -> เน้นการประยุกต์ใช้และการวิเคราะห์ (Apply / Analyze)
-- **ยาก** -> เน้นการวิเคราะห์, การประเมินค่า และการสร้างสรรค์ (Analyze / Evaluate / Create)
-
-### 3. User-Driven Configuration
-ผู้ใช้ไม่ได้แค่รอดูผลลัพธ์ แต่สามารถกำหนดทิศทางของข้อสอบได้เอง:
-- เลือก "ระดับผู้เรียน" (Learner Level) ด้วยตัวเอง
-- เลือก "ระดับความยาก" (Difficulty) ด้วยตัวเอง
+**QuizSensei** คือแพลตฟอร์มการประเมินผลทางการศึกษาที่ขับเคลื่อนด้วยปัญญาประดิษฐ์ (AI-powered Assessment Platform) โดยมุ่งเน้นการเสริมสร้างทักษะความรู้ทางการเงิน (**Financial Literacy**) ระบบใช้สถาปัตยกรรม **Multi-Agent LLM Pipeline** ในการวิเคราะห์เนื้อหาเชิงลึกและสร้างเครื่องมือวัดผลที่มีประสิทธิภาพสูงสุดในรูปแบบภาษาไทย
 
 ---
 
-## 🛠 เทคโนโลยีที่ใช้ (Tech Stack)
-- **Backend**: FastAPI (Python 3.12+)
-- **LLM API**: OpenRouter (รองรับการทำ Stateful AI ผ่าน Responses API)
-- **Database**: PostgreSQL (SQLAlchemy + Asyncpg) & Redis
-- **Frontend**: Vanilla HTML5, CSS (Glassmorphism), JavaScript (SPA Concept)
-- **Extraction**: Support PDF, DOCX, TXT
+## สถาปัตยกรรมระบบ (System Architecture)
+
+ระบบประกอบด้วย 4 ตัวแทนอัจฉริยะ (Agents) ที่ทำงานประสานกันผ่าน Pipeline เพื่อการประเมินผลที่แม่นยำ:
+
+1.  **Analytical Agent (Analyzer)**: 
+    *   ดำเนินการวิเคราะห์เนื้อหาจากเอกสารที่อัปโหลด
+    *   จำแนกระดับผู้เรียน (Learner Level) และประเมินความเพียงพอของเนื้อหา (Content Sufficiency)
+    *   ทำหน้าที่เป็น Gatekeeper เพื่อรักษาคุณภาพของชุดข้อมูลตั้งต้น
+2.  **Generation Agent (Generator)**: 
+    *   ออกแบบและสร้างข้อสอบปรนัย (Multiple Choice Questions) ที่สอดคล้องกับระนาบระดับความยาก (Difficulty Levels) ที่กำหนดโดยผู้ใช้
+    *   บูรณาการความรู้เฉพาะทางเข้ากับบริบทของผู้เรียน
+3.  **Auditing Agent (Auditor)**: 
+    *   ตรวจสอบคุณลักษณะของข้อสอบตามมาตรฐานวิชาการ
+    *   ประเมินความถูกต้องของตัวเลือก (Options) และคุณภาพของตัวเลือกหลอก (Distractors) 
+    *   ประยุกต์ใช้ระนาบพุทธิพิสัย (Bloom's Taxonomy) เพื่อควบคุมมาตรฐานคำถาม
+4.  **Diagnostic Agent (Grader)**: 
+    *   ประมวลผลการตอบสนองของผู้เรียนและให้ข้อมูลย้อนกลับเชิงวินิจฉัย (Diagnostic Feedback)
+    *   วิเคราะห์ความเข้าใจผิด (Misconceptions) และให้เหตุผลทางวิชาการประกอบผลลัพธ์
 
 ---
 
-## 🏃 วิธีเริ่มใช้งานระบบ
+## กรอบแนวคิดเชิงวิชาการ (Educational Methodology)
 
-### 1. ตั้งค่า Environment
-สร้างไฟล์ `.env` และระบุ API Key:
+QuizSensei ใช้ทฤษฎี **Bloom’s Taxonomy** ในการกำหนดโครงสร้างความซับซ้อนของคำถาม:
+
+| ระดับความยาก | การประยุกต์ใช้ Bloom’s Taxonomy | วัตถุประสงค์การเรียนรู้ |
+| :--- | :--- | :--- |
+| **ระดับพื้นฐาน (Easy)** | Remember, Understand | มุ่งเน้นการระลึกถึงข้อเท็จจริงและความเข้าใจพื้นฐาน |
+| **ระดับกลาง (Intermediate)** | Apply, Analyze | การนำความรู้ไปใช้ในสถานการณ์จำลองและการแยกแยะข้อมูล |
+| **ระดับสูง (Advanced)** | Analyze, Evaluate, Create | การประเมินค่าข้อมูลและการสังเคราะห์แนวคิดใหม่ |
+
+---
+
+## โครงสร้างทางเทคโนโลยี (Tech Stack)
+
+*   **Core Logic**: Python 3.12+ (FastAPI Framework)
+*   **Intelligent Processing**: OpenRouter Responses API (Stateful AI Processing)
+*   **Infrastructure**: PostgreSQL (Async Database Layer) & Redis (Caching Layer)
+*   **Interface**: Modern Single Page Application (SPA Concept) with Glassmorphism UI
+*   **Document Intelligence**: Document Parser supporting PDF, DOCX, and Text Formats
+
+---
+
+## ขั้นตอนการติดตั้ง (Deployment Guide)
+
+### 1. การกำหนดค่าระบบ (Configuration)
+สร้างไฟล์ `.env` ณ root directory และกำหนดค่าตัวแปรสภาพแวดล้อม:
+
 ```env
 OPENROUTER_API_KEYS=sk-or-v1-xxxx...
 OPENROUTER_MODEL=arcee-ai/trinity-large-preview:free 
 DATABASE_URL=postgresql+asyncpg://user:pass@db:5432/quizsensei_db
 ```
 
-### 2. รันระบบผ่าน Docker
+### 2. การเริ่มการทำงาน (Execution)
+รันระบบผ่าน Docker Containerization เพื่อความเสถียรของสภาพแวดล้อม:
+
 ```bash
 docker compose up --build -d
 ```
-เข้าใช้งานได้ที่ **[http://localhost:8000](http://localhost:8000)**
+เข้าสู่ระบบผ่าน Web Interface ได้ที่: **http://localhost:8000**
 
 ---
 
-## 📂 โครงสร้างโปรเจกต์ (Project Structure)
-- **`app/services/analyzers/`**: Agent 1 (Analyzer Logic)
-- **`app/services/generators/`**: Agent 2 (Question Generation)
-- **`app/services/agents/`**: Agent 3 (Auditor) และ Agent 4 (Grader)
-- **`app/routers/`**: API Endpoints (Documents, Exams)
-- **`frontend/`**: หน้าจอผู้ใช้งาน (Dark Mode & Premium UI)
+## โครงสร้างโปรเจกต์ (Project Structure)
+
+```text
+app/
+├── core/               # Configuration and Shared Logic
+├── models/             # Database Schemas
+├── routers/            # API Endpoints (Exam & Document Management)
+├── services/           
+│   ├── analyzers/      # Analytical Agent Logic
+│   ├── generators/     # Question Generation Engine
+│   └── agents/         # Auditor and Diagnostic Grader
+frontend/               # User Experience and Interface Components
+```
 
 ---
-© 2026 QuizSensei Project. Developed for Advanced AI Assessment.
+© 2026 QuizSensei Project. Dedicated to Advanced Educational AI Research and Development.
