@@ -29,11 +29,11 @@ def call_openrouter_completions(
     model: Optional[str] = None,
     temperature: float = 0.1,
     max_tokens: int = 4000,
-    timeout: int = 180
+    timeout: int = 240
 ) -> Optional[str]:
     """
     Centralized utility to call OpenRouter API using the v1/completions endpoint.
-    Handles key selection and basic text retrieval.
+    As specifically requested by the user for stepfun/step-3.5-flash:free.
     """
     settings = get_settings()
     api_key = get_llm_api_key()
@@ -43,8 +43,8 @@ def call_openrouter_completions(
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/QuizSensei/Nectec26",
-        "X-Title": "QuizSensei Assessment Platform"
+        "HTTP-Referer": settings.OPENROUTER_REFERER,
+        "X-Title": settings.OPENROUTER_TITLE
     }
 
     payload = {
@@ -55,12 +55,11 @@ def call_openrouter_completions(
     }
 
     # ── [LOG BEFORE SENDING] ──────────────────────────────────────────
-    logger.info("============== LLM REQUEST START ==============")
+    logger.info("============== LLM REQUEST START (COMPLETIONS) ==============")
     logger.info(f"URL: {url}")
     logger.info(f"Model: {target_model}")
     logger.info(f"Prompt Length: {len(prompt)} chars")
-    # logger.info(f"Full Prompt Sent:\n{prompt}") # Selective: can be very large
-    logger.info("===============================================")
+    logger.info("============================================================")
 
     try:
         response = requests.post(url, json=payload, headers=headers, timeout=timeout)
@@ -73,21 +72,20 @@ def call_openrouter_completions(
             return None
 
         result = response.json()
-        logger.info("============== LLM RESPONSE PARTIAL ==============")
-        # Log first 500 chars of result for debugging
-        logger.info(f"Raw JSON result keys: {list(result.keys())}")
         
         if "choices" in result and len(result["choices"]) > 0:
             choice = result["choices"][0]
-            raw_text = choice.get("text") or choice.get("message", {}).get("content")
+            # /v1/completions uses 'text' field
+            raw_text = choice.get("text")
             
             if raw_text:
                 logger.info(f"Received Text Length: {len(raw_text)}")
-                logger.info(f"Snippet (first 300): {raw_text[:300]}...")
-                logger.info("================================================")
+                logger.info(f"--- FULL LLM RESPONSE TEXT ---")
+                logger.info(raw_text)
+                logger.info("--- END OF LLM RESPONSE ---")
                 return raw_text.strip()
             
-        logger.error(f"No text found in response: {result}")
+        logger.error(f"No 'text' found in response: {json.dumps(result, ensure_ascii=False)[:500]}")
         return None
 
     except Exception as e:
@@ -100,7 +98,7 @@ def call_openrouter_json(
     temperature: float = 0.1,
     max_tokens: int = 4000
 ) -> Optional[Union[Dict[str, Any], List[Any]]]:
-    """Calls completions, cleans markdown fences, and parses JSON result."""
+    """Calls v1/completions, cleans markdown fences, and parses JSON result."""
     raw = call_openrouter_completions(prompt, model, temperature, max_tokens)
     if not raw:
         logger.error("LLM returned no content or failed.")
@@ -109,17 +107,15 @@ def call_openrouter_json(
     cleaned = clean_json_string(raw)
     try:
         data = json.loads(cleaned)
-        logger.debug("Successfully parsed JSON from LLM.")
+        logger.info("Successfully parsed JSON.")
         return data
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON Decode Error @ {e.lineno}:{e.colno} - {e.msg}")
-        logger.error(f"First 1000 chars of raw content: {raw[:1000]}")
-        # Try to find the start of the JSON array/object if cleaning failed
+    except Exception as e:
+        logger.error(f"JSON Parse Error: {e}")
+        # Retrying with scavenging
         try:
             start_idx = cleaned.find('[') if '[' in cleaned else cleaned.find('{')
             end_idx = cleaned.rfind(']') if ']' in cleaned else cleaned.rfind('}')
             if start_idx != -1 and end_idx != -1:
-                logger.info("Retrying JSON parse by finding delimiters...")
                 return json.loads(cleaned[start_idx:end_idx+1])
         except:
             pass
@@ -132,7 +128,7 @@ def call_openrouter_vision(
     temperature: float = 0.0,
     timeout: int = 120
 ) -> Optional[str]:
-    """Centralized vision utility for OCR."""
+    """Centralized vision utility (always uses chat/completions)."""
     settings = get_settings()
     api_key = get_llm_api_key()
     target_model = model or settings.OPENROUTER_MODEL_OCR
@@ -141,8 +137,8 @@ def call_openrouter_vision(
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/QuizSensei/Nectec26",
-        "X-Title": "QuizSensei Assessment Platform"
+        "HTTP-Referer": settings.OPENROUTER_REFERER,
+        "X-Title": settings.OPENROUTER_TITLE
     }
 
     payload = {
@@ -160,14 +156,12 @@ def call_openrouter_vision(
     }
 
     try:
+        logger.info(f"Vision API call -> {target_model}")
         response = requests.post(url, json=payload, headers=headers, timeout=timeout)
-        if response.status_code != 200:
-            logger.warning(f"Vision API Error: {response.text}")
-            return None
-
-        result = response.json()
-        if "choices" in result and len(result["choices"]) > 0:
+        if response.status_code == 200:
+            result = response.json()
             return result["choices"][0]["message"]["content"].strip()
+        logger.error(f"Vision Error: {response.text}")
         return None
     except Exception as e:
         logger.error(f"Vision call aborted: {e}")

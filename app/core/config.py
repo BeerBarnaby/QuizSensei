@@ -23,8 +23,10 @@ class Settings(BaseSettings):
     # ── OpenRouter LLM ───────────────────────────────────────────────────
     OPENROUTER_BASE_URL: str
     OPENROUTER_MODEL: str
-    OPENROUTER_MODEL_OCR: str = "google/gemini-pro-vision:free" # Default fallback
+    OPENROUTER_MODEL_OCR: str = "google/gemini-flash-1.5:free" # Default fallback
     OPENROUTER_API_KEYS: str
+    OPENROUTER_REFERER: str = "https://github.com/QuizSensei/Nectec26"
+    OPENROUTER_TITLE: str = "QuizSensei Assessment Platform"
     
     # ── Database (PostgreSQL) ────────────────────────────────────────────
     POSTGRES_USER: str = "quizsensei"

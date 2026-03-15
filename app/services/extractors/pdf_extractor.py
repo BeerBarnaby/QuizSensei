@@ -37,11 +37,43 @@ class PdfExtractor(BaseExtractor):
         self.model = self.settings.OPENROUTER_MODEL
         self.ocr_model = self.settings.OPENROUTER_MODEL_OCR
 
+    def _clean_text(self, text: str) -> str:
+        """
+        Post-processing to clean up OCR noise like redundant dashes, dots,
+        and empty lines typical of form-filling templates.
+        """
+        import re
+        if not text:
+            return ""
+            
+        # Remove lines that are just dashes, dots, or underscores (common in forms)
+        lines = text.split('\n')
+        cleaned_lines = []
+        for line in lines:
+            stripped = line.strip()
+            # If line is mostly symbols (more than 5 continuous dashes/dots/underscores)
+            if re.match(r'^[\s\-\._=…]{5,}$', stripped):
+                continue
+            # Remove trailing/leading symbols from valid lines
+            line = re.sub(r'[\-\._=…]{5,}', ' ', line)
+            cleaned_lines.append(line.rstrip())
+            
+        # Join and collapse multiple newlines
+        text = '\n'.join(cleaned_lines)
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        return text.strip()
+
     def _extract_via_llm_vision(self, image_bytes: bytes) -> str:
         """Sends the page image to OpenRouter Vision API to extract text."""
         from app.core.llm import call_openrouter_vision
         
-        prompt = "Extract all text from this image exactly as it appears. If Thai text is present, ensure correct character rendering. Output ONLY the extracted text."
+        prompt = (
+            "Extract all meaningful Thai and English text from this document image. "
+            "Ignore background decorative elements, lines, or placeholders (like '........'). "
+            "Format the output into clean, readable paragraphs. "
+            "If there are tables, represent them as structured text. "
+            "Output ONLY the extracted text."
+        )
         
         logger.info(f"Targeting OCR Model: {self.ocr_model}")
         raw = call_openrouter_vision(
@@ -50,7 +82,7 @@ class PdfExtractor(BaseExtractor):
             model=self.ocr_model
         )
         
-        return raw or ""
+        return self._clean_text(raw or "")
 
     def _extract_sync(self, path: Path) -> str:
         """Synchronous wrapper around pypdf logic with OCR fallback."""
@@ -84,7 +116,7 @@ class PdfExtractor(BaseExtractor):
                     if page_text:
                         text_parts.append(page_text)
 
-        return "\n\n".join(text_parts).strip()
+        return self._clean_text("\n\n".join(text_parts).strip())
 
     async def extract_text(self, file_path: Path) -> str:
         """

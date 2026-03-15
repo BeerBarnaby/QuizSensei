@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import aiofiles
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status as fast_status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
@@ -70,7 +70,7 @@ class QuestionGenerationService:
             async with aiofiles.open(analysis_path, "r", encoding="utf-8") as f:
                 analysis_data = json.loads(await f.read())
         except Exception:
-            raise HTTPException(status_code=422, detail="Sidecar files unreadable.")
+            raise HTTPException(status_code=fast_status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Sidecar files unreadable.")
 
         # ── GATE: Content Sufficiency Check ────────────────────────────
         is_sufficient = analysis_data.get("content_sufficiency", False)
@@ -79,7 +79,7 @@ class QuestionGenerationService:
             rec = analysis_data.get("recommended_next_action", "กรุณาอัปโหลดเอกสารที่มีเนื้อหาทางการเงินดรายอื่นเพิ่มเติม")
             logger.warning(f"Generation blocked for {document_id}: {msg}")
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=fast_status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"ระบบหยุดการสร้างข้อสอบ: {msg} ({rec})"
             )
 
@@ -132,10 +132,10 @@ class QuestionGenerationService:
                 break
 
             for q in audited:
-                status = q.get("audit_status")
-                if status == "approved":
+                q_status = q.get("audit_status")
+                if q_status == "approved":
                     approved_questions.append(q)
-                elif status == "rejected":
+                elif q_status == "rejected":
                     rejected_questions.append(q)
                 else:
                     pending_questions.append(q)
