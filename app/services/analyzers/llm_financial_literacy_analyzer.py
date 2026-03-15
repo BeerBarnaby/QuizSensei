@@ -38,14 +38,13 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
     def __init__(self, settings: Settings):
         self.settings = settings
         self.model = settings.OPENROUTER_MODEL
-        self.api_key = random.choice(settings.openrouter_keys_list) if settings.openrouter_keys_list else "dummy"
 
     def _get_system_prompt(self) -> str:
         taxonomy_str = "\n".join(
             f"  {i+1}. {topic}: [{', '.join(subs)}]"
             for i, (topic, subs) in enumerate(self.FL_TAXONOMY.items())
         )
-        return f"""คุณคือ Agent 1 (Analyzer) ของแพลตฟอร์ม EvalMind
+        return f"""คุณคือ Agent 1 (Analyzer) ของแพลตฟอร์ม QuizSensei
 
 หน้าที่ของคุณคือวิเคราะห์อัปโหลดเนื้อหาเอกสาร (ภาษาไทย 100%) แล้วตอบกลับเป็นโครงสร้าง JSON ทันที
 
@@ -91,89 +90,31 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
         max_chars = 30_000
         truncated = text[:max_chars]
 
-        import requests
-        try:
-            url = "https://openrouter.ai/api/v1/completions"
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
+        from app.core.llm import call_openrouter_json
+        
+        full_prompt = f"{self._get_system_prompt()}\n\nข้อความสำหรับวิเคราะห์:\n{truncated}"
+        
+        parsed = call_openrouter_json(
+            prompt=full_prompt,
+            model=self.model,
+            temperature=0.1
+        )
             
-            dprompt = f"""
-{self._get_system_prompt()}
-
----
-ข้อความสำหรับวิเคราะห์:
-{truncated}
-"""
-            
-            payload = {
-                "model": self.model,
-                "prompt": dprompt,
-                "temperature": 0.1
-            }
-
-            print("=== PAYLOAD TO LLM (AGENT 1) ===")
-            print(json.dumps(payload, ensure_ascii=False, indent=2))
-            print("================================")
-
-            response = requests.post(url, json=payload, headers=headers, timeout=60)
-            response.raise_for_status()
-            
-            resp_data = response.json()
-            
-            if "choices" not in resp_data or not resp_data["choices"]:
-                raise Exception(f"Invalid API Response: {resp_data}")
-                
-            raw = resp_data['choices'][0]['text'].strip()
-
-            # Clean markdown code fences if present
-            if "```json" in raw:
-                raw = raw.split("```json")[1].split("```")[0].strip()
-            elif "```" in raw:
-                raw = raw.split("```")[1].split("```")[0].strip()
-            
-            parsed = json.loads(raw)
-            parsed.setdefault("status", "success")
-            parsed.setdefault("message", "Analyzed successfully")
-            parsed.setdefault("analyzed_char_count", len(truncated))
-            parsed.setdefault("document_id", "")
-
-            return parsed
-
-        except requests.exceptions.HTTPError as e:
-            logger.error(f"Agent 1 API Error: {e.response.text}")
+        if not parsed:
+            logger.error(f"Agent 1 failed to get valid JSON response.")
             return {
                 "topic": "unknown",
                 "subtopic": "unknown",
-                "suggested_learner_level": "วัยทำงาน",
-                "learner_level_reason": "ไม่สามารถวิเคราะห์ระดัยชั้นได้จากระบบ",
+                "suggested_learner_level": "ประถม",
                 "content_sufficiency": False,
-                "sufficiency_reason": f"ระบบตอบสนองผิดพลาด: HTTP {e.response.status_code}",
+                "sufficiency_reason": f"API Error Fallback",
                 "should_upload_more_documents": True,
-                "recommended_next_action": "กรุณาตรวจสอบเครือข่ายแล้วลองอัปโหลดอีกครั้ง",
-                "status": "failed",
-                "message": f"API ล้มเหลว: HTTP {e.response.status_code}",
-                "keywords_found": [],
-                "analyzed_char_count": len(truncated)
+                "status": "error"
             }
-        except json.JSONDecodeError as e:
-            logger.error(f"Agent 1 JSON parse error: {e}")
-            return {
-                "topic": "unknown",
-                "subtopic": "unknown",
-                "suggested_learner_level": "วัยทำงาน",
-                "learner_level_reason": "ไม่สามารถวิเคราะห์ระดัยชั้นได้จากระบบ",
-                "content_sufficiency": False,
-                "sufficiency_reason": "ระบบขัดข้องไม่สามารถทำความเข้าใจเนื้อหาได้",
-                "should_upload_more_documents": True,
-                "recommended_next_action": "กรุณาจัดรูปแบบข้อความในเอกสารให้ชัดเจนขึ้นแล้วลองอัปโหลดอีกครั้ง",
-                "status": "failed",
-                "message": f"ประมวลผล JSON ล้มเหลว: {e}",
-                "keywords_found": [],
-                "analyzed_char_count": len(truncated)
-            }
-        except Exception as e:
-            logger.error(f"Agent 1 failed: {e}")
-            raise Exception(f"Agent 1 ทำงานล้มเหลว: {str(e)}")
+
+        parsed.setdefault("status", "success")
+        parsed.setdefault("message", "Analyzed successfully")
+        parsed.setdefault("analyzed_char_count", len(truncated))
+        parsed.setdefault("document_id", "")
+        return parsed
 

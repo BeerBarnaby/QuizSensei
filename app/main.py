@@ -32,7 +32,7 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description=(
-        "EvalMind – AI-powered assessment platform. "
+        "QuizSensei – AI-powered assessment platform. "
         "Phase 1 MVP: document upload service."
     ),
     docs_url="/docs",

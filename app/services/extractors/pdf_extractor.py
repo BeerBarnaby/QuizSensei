@@ -34,52 +34,23 @@ class PdfExtractor(BaseExtractor):
 
     def __init__(self):
         self.settings = get_settings()
-        keys = self.settings.openrouter_keys_list
-        self.api_key = random.choice(keys) if keys else "dummy"
-        self.model = "openai/gpt-oss-120b:free" # Use the user requested model for OCR
+        self.model = self.settings.OPENROUTER_MODEL
+        self.ocr_model = self.settings.OPENROUTER_MODEL_OCR
 
     def _extract_via_llm_vision(self, image_bytes: bytes) -> str:
         """Sends the page image to OpenRouter Vision API to extract text."""
-        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+        from app.core.llm import call_openrouter_vision
         
-        url = "https://openrouter.ai/api/v1/responses"
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+        prompt = "Extract all text from this image exactly as it appears. If Thai text is present, ensure correct character rendering. Output ONLY the extracted text."
         
-        payload = {
-            "model": self.model,
-            "input": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "input_text",
-                            "text": "Extract all the text from this image exactly as it appears. Do not add any formatting, comments, or your own words. Just output the pure extracted text."
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
-                            }
-                        }
-                    ]
-                }
-            ]
-        }
+        logger.info(f"Targeting OCR Model: {self.ocr_model}")
+        raw = call_openrouter_vision(
+            prompt=prompt,
+            base64_image=base64.b64encode(image_bytes).decode('utf-8'),
+            model=self.ocr_model
+        )
         
-        response = requests.post(url, json=payload, headers=headers, timeout=120)
-        response.raise_for_status()
-        
-        resp_data = response.json()
-        raw = ""
-        if "output" in resp_data and len(resp_data["output"]) > 0:
-            first_output = resp_data["output"][0]
-            if "content" in first_output and len(first_output["content"]) > 0:
-                 raw = first_output["content"][0].get("text", "").strip()
-        
-        return raw
+        return raw or ""
 
     def _extract_sync(self, path: Path) -> str:
         """Synchronous wrapper around pypdf logic with OCR fallback."""

@@ -19,8 +19,8 @@ RUN pip install --upgrade pip && \
 # ── Stage 2: runtime image ────────────────────────────────────────────────────
 FROM python:3.12-slim AS runtime
 
-LABEL maintainer="EvalMind Team"
-LABEL app="evalmind-api"
+LABEL maintainer="QuizSensei Team"
+LABEL app="quizsensei-api"
 LABEL version="0.1.0"
 
 # Non-root user for security

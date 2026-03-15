@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime # Use the lean runtime stage
-    container_name: evalmind_api
+    container_name: quizsensei_api
     restart: unless-stopped
     env_file:
       - .env
@@ -32,27 +32,27 @@ services:
 
   db:
     image: postgres:15-alpine
-    container_name: evalmind_db
+    container_name: quizsensei_db
     restart: unless-stopped
     env_file:
       - .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-evalmind}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-evalmind_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-evalmind_db}
+      POSTGRES_USER: ${POSTGRES_USER:-quizsensei}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quizsensei_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-quizsensei_db}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-evalmind} -d ${POSTGRES_DB:-evalmind_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-quizsensei} -d ${POSTGRES_DB:-quizsensei_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: evalmind_redis
+    container_name: quizsensei_redis
     restart: unless-stopped
     ports:
       - "6379:6379"

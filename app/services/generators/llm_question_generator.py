@@ -29,8 +29,6 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
 
     def __init__(self, settings: Settings):
         self.settings = settings
-        keys = settings.openrouter_keys_list
-        self.api_key = random.choice(keys) if keys else "dummy"
         self.model = settings.OPENROUTER_MODEL
 
     def _map_difficulty_to_blooms(self, difficulty: str) -> str:
@@ -46,7 +44,7 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
     def _get_system_prompt(self, topic: str, subtopic: str, difficulty: str, target_audience: str, num_q: int) -> str:
         blooms_rule = self._map_difficulty_to_blooms(difficulty)
         
-        return f"""คุณคือ Agent 2 ของระบบ EvalMind หน้าที่ของคุณคือการสร้างข้อสอบวิชา Financial Literacy (ภาษาไทย 100%)
+        return f"""คุณคือ Agent 2 ของระบบ QuizSensei หน้าที่ของคุณคือการสร้างข้อสอบวิชา Financial Literacy (ภาษาไทย 100%)
 
 สร้างข้อสอบแบบปรนัย (Multiple Choice) จำนวน {num_q} ข้อ ในหัวข้อ:
   Topic:    {topic}
@@ -125,50 +123,23 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
             "อย่าลืมตอบกลับด้วยรูปแบบ JSON รูปแบบข้อสอบตามที่กำหนดเท่านั้น"
         )
 
-        import requests
+        from app.core.llm import call_openrouter_json
+        
+        full_prompt = f"{system_prompt}\n\n{user_prompt}"
+
         try:
             logger.info(f"Agent 2 เริ่มสร้างข้อสอบ {num_q} ข้อสำหรับระดับ {audience} ความยาก {difficulty}")
 
-            url = "https://openrouter.ai/api/v1/completions"
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-
-            dprompt = f"""
-{system_prompt}
-
----
-{user_prompt}
-"""
-
-            payload = {
-                "model": self.model,
-                "prompt": dprompt,
-                "temperature": 0.7
-            }
-
-            print("=== PAYLOAD TO LLM (AGENT 2) ===")
-            print(json.dumps(payload, ensure_ascii=False, indent=2))
-            print("================================")
-
-            response = requests.post(url, json=payload, headers=headers, timeout=180)
-            response.raise_for_status()
+            questions = call_openrouter_json(
+                prompt=full_prompt,
+                model=self.model,
+                temperature=0.7
+            )
             
-            resp_data = response.json()
-            
-            if "choices" not in resp_data or not resp_data["choices"]:
-                raise Exception(f"Invalid API Response: {resp_data}")
+            if not questions:
+                logger.error("Agent 2 failed to get valid JSON questions")
+                raise Exception("Agent 2 ล้มเหลวเนื่องจากการเชื่อมต่อ API หรือการประมวลผล JSON")
 
-            raw = resp_data['choices'][0]['text'].strip()
-
-            # Clean markdown code fences if present
-            if "```json" in raw:
-                raw = raw.split("```json")[1].split("```")[0].strip()
-            elif "```" in raw:
-                raw = raw.split("```")[1].split("```")[0].strip()
-
-            questions = json.loads(raw)
             if not isinstance(questions, list):
                 questions = [questions]
 
@@ -184,12 +155,6 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
 
             return questions
 
-        except requests.exceptions.HTTPError as e:
-            logger.error(f"Agent 2 API Error: {e.response.text}")
-            raise Exception(f"Agent 2 ล้มเหลวเนื่องจากการเชื่อมต่อ API: HTTP {e.response.status_code}")
-        except json.JSONDecodeError as e:
-            logger.error(f"Agent 2 JSON parse error: {e}")
-            raise Exception("Agent 2 คืนค่าข้อมูลที่ไม่ใช่ JSON ที่ถูกต้อง")
         except Exception as e:
             logger.error(f"Agent 2 ใช้งาน LLM ล้มเหลว: {e}")
             raise Exception(f"Agent 2 ทำงานผิดพลาด: {str(e)}")

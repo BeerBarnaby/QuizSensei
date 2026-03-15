@@ -23,12 +23,13 @@ class Settings(BaseSettings):
     # ── OpenRouter LLM ───────────────────────────────────────────────────
     OPENROUTER_BASE_URL: str
     OPENROUTER_MODEL: str
+    OPENROUTER_MODEL_OCR: str = "google/gemini-pro-vision:free" # Default fallback
     OPENROUTER_API_KEYS: str
     
     # ── Database (PostgreSQL) ────────────────────────────────────────────
-    POSTGRES_USER: str = "evalmind"
-    POSTGRES_PASSWORD: str = "evalmind_secret"
-    POSTGRES_DB: str = "evalmind_db"
+    POSTGRES_USER: str = "quizsensei"
+    POSTGRES_PASSWORD: str = "quizsensei_secret"
+    POSTGRES_DB: str = "quizsensei_db"
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
 

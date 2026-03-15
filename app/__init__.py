@@ -1,1 +1,1 @@
-# EvalMind application package
+# QuizSensei application package

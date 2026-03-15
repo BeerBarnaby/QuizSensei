@@ -29,10 +29,9 @@ class AuditorAgent:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.model = settings.OPENROUTER_MODEL
-        self.api_key = random.choice(settings.openrouter_keys_list) if settings.openrouter_keys_list else "dummy"
 
     def _get_system_prompt(self, target_audience: str, difficulty: str) -> str:
-        return f"""คุณคือ Agent 3 ของระบบ EvalMind — ผู้ตรวจสอบคุณภาพข้อสอบ (Question Quality Auditor)
+        return f"""คุณคือ Agent 3 ของระบบ QuizSensei — ผู้ตรวจสอบคุณภาพข้อสอบ (Question Quality Auditor)
 
 คุณจะได้รับรายการข้อสอบ Financial Literacy แบบปรนัย (Multiple Choice) ที่สร้างโดย Agent 2 (เป็นภาษาไทย)
 หน้าที่ของคุณ: ประเมินข้อสอบแต่ละข้อว่าจะ "ผ่าน (APPROVED)" หรือ "ไม่ผ่าน (REJECTED)"
@@ -107,51 +106,23 @@ class AuditorAgent:
             "ส่งกลับเป็น Array JSON ของผลลัพธ์การ Audit เท่านั้น"
         )
 
-        import requests
+        from app.core.llm import call_openrouter_json
+        
+        full_prompt = f"{system_prompt}\n\n{user_prompt}"
+
         try:
             logger.info(f"Agent 3 กำลังออดิทข้อสอบ {len(questions)} ข้อ สำหรับระดับ {audience}")
 
-            url = "https://openrouter.ai/api/v1/completions"
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
+            audit_results = call_openrouter_json(
+                prompt=full_prompt,
+                model=self.model,
+                temperature=0.1
+            )
 
-            dprompt = f"""
-{system_prompt}
-
----
-{user_prompt}
-"""
-
-            payload = {
-                "model": self.model,
-                "prompt": dprompt,
-                "temperature": 0.1
-            }
-
-            print("=== PAYLOAD TO LLM (AGENT 3) ===")
-            print(json.dumps(payload, ensure_ascii=False, indent=2))
-            print("================================")
-
-            response = requests.post(url, json=payload, headers=headers, timeout=90)
-            response.raise_for_status()
-
-            resp_data = response.json()
+            if not audit_results or not isinstance(audit_results, list):
+                 logger.error("Agent 3 API Error or invalid format fallback")
+                 return questions
             
-            if "choices" not in resp_data or not resp_data["choices"]:
-                raise Exception(f"Invalid API Response: {resp_data}")
-
-            raw = resp_data['choices'][0]['text'].strip()
-
-            # Clean markdown code fences if present
-            if "```json" in raw:
-                raw = raw.split("```json")[1].split("```")[0].strip()
-            elif "```" in raw:
-                raw = raw.split("```")[1].split("```")[0].strip()
-
-            audit_results: List[Dict] = json.loads(raw)
-
             audit_map = {r["question_id"]: r for r in audit_results}
             checked_at = datetime.now(timezone.utc).isoformat()
 
@@ -167,21 +138,9 @@ class AuditorAgent:
 
             return questions
 
-        except requests.exceptions.HTTPError as e:
-            logger.error(f"Agent 3 API Error: {e.response.text}")
-            for q in questions:
-                q.setdefault("audit_status", "rejected")
-                q.setdefault("audit_feedback", f"ถูกปฏิเสธอัตโนมัติเนื่องจากเครือข่ายขัดข้อง: HTTP {e.response.status_code}")
-            return questions
-        except json.JSONDecodeError as e:
-            logger.error(f"Agent 3 JSON parse error: {e}")
-            for q in questions:
-                q.setdefault("audit_status", "rejected")
-                q.setdefault("audit_feedback", "ถูกปฏิเสธอัตโนมัติเนื่องจากขั้นตอนการตรวจสอบเกิดความผิดพลาดทาง JSON")
-            return questions
         except Exception as e:
             logger.error(f"Agent 3 failed: {e}")
             for q in questions:
                 q.setdefault("audit_status", "rejected")
-                q.setdefault("audit_feedback", f"การตรวจสอบถูกข้ามและปฏิเสธเนื่องจากระบบขัดข้อง: {str(e)}")
+                q.setdefault("audit_feedback", f"การตรวจสอบถูกข้ามและปฏิเสธเนื่องจากระบขัดข้อง: {str(e)}")
             return questions
