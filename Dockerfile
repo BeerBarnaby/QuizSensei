@@ -35,6 +35,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Install system dependencies for OCR
 RUN apt-get update && apt-get install -y --no-install-recommends \
     poppler-utils \
+    tesseract-ocr \
+    tesseract-ocr-tha \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy application source

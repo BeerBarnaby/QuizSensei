@@ -1,86 +1,86 @@
-# QuizSensei: AI-Powered Educational Assessment Framework
+# QuizSensei — Multi-Agent LLM Assessment Platform
 
-**QuizSensei** คือแพลตฟอร์มการประเมินผลทางการศึกษาที่ขับเคลื่อนด้วยปัญญาประดิษฐ์ (AI-powered Assessment Platform) โดยมุ่งเน้นการเสริมสร้างทักษะความรู้ทางการเงิน (**Financial Literacy**) ระบบใช้สถาปัตยกรรม **Multi-Agent LLM Pipeline** ในการวิเคราะห์เนื้อหาเชิงลึกและสร้างเครื่องมือวัดผลที่มีประสิทธิภาพสูงสุดในรูปแบบภาษาไทย
+ระบบสร้างข้อสอบอัตโนมัติเชิงวินิจฉัยด้านความรู้ทางการเงิน (Financial Literacy) ผ่าน Multi-Agent LLM Pipeline พร้อมระบบ OCR สำหรับเอกสารภาษาไทย
 
----
+## System Architecture
 
-## สถาปัตยกรรมระบบ (System Architecture)
-
-ระบบประกอบด้วย 4 ตัวแทนอัจฉริยะ (Agents) ที่ทำงานประสานกันผ่าน Pipeline เพื่อการประเมินผลที่แม่นยำ:
-
-1.  **Analytical Agent (Analyzer)**: 
-    *   ดำเนินการวิเคราะห์เนื้อหาจากเอกสารที่อัปโหลด
-    *   จำแนกระดับผู้เรียน (Learner Level) และประเมินความเพียงพอของเนื้อหา (Content Sufficiency)
-    *   ทำหน้าที่เป็น Gatekeeper เพื่อรักษาคุณภาพของชุดข้อมูลตั้งต้น
-2.  **Generation Agent (Generator)**: 
-    *   ออกแบบและสร้างข้อสอบปรนัย (Multiple Choice Questions) ที่สอดคล้องกับระนาบระดับความยาก (Difficulty Levels) ที่กำหนดโดยผู้ใช้
-    *   บูรณาการความรู้เฉพาะทางเข้ากับบริบทของผู้เรียน
-3.  **Auditing Agent (Auditor)**: 
-    *   ตรวจสอบคุณลักษณะของข้อสอบตามมาตรฐานวิชาการ
-    *   ประเมินความถูกต้องของตัวเลือก (Options) และคุณภาพของตัวเลือกหลอก (Distractors) 
-    *   ประยุกต์ใช้ระนาบพุทธิพิสัย (Bloom's Taxonomy) เพื่อควบคุมมาตรฐานคำถาม
-4.  **Diagnostic Agent (Grader)**: 
-    *   ประมวลผลการตอบสนองของผู้เรียนและให้ข้อมูลย้อนกลับเชิงวินิจฉัย (Diagnostic Feedback)
-    *   วิเคราะห์ความเข้าใจผิด (Misconceptions) และให้เหตุผลทางวิชาการประกอบผลลัพธ์
-
----
-
-## กรอบแนวคิดเชิงวิชาการ (Educational Methodology)
-
-QuizSensei ใช้ทฤษฎี **Bloom’s Taxonomy** ในการกำหนดโครงสร้างความซับซ้อนของคำถาม:
-
-| ระดับความยาก | การประยุกต์ใช้ Bloom’s Taxonomy | วัตถุประสงค์การเรียนรู้ |
-| :--- | :--- | :--- |
-| **ระดับพื้นฐาน (Easy)** | Remember, Understand | มุ่งเน้นการระลึกถึงข้อเท็จจริงและความเข้าใจพื้นฐาน |
-| **ระดับกลาง (Intermediate)** | Apply, Analyze | การนำความรู้ไปใช้ในสถานการณ์จำลองและการแยกแยะข้อมูล |
-| **ระดับสูง (Advanced)** | Analyze, Evaluate, Create | การประเมินค่าข้อมูลและการสังเคราะห์แนวคิดใหม่ |
-
----
-
-## โครงสร้างทางเทคโนโลยี (Tech Stack)
-
-*   **Core Logic**: Python 3.12+ (FastAPI Framework)
-*   **Intelligent Processing**: OpenRouter Responses API (Stateful AI Processing)
-*   **Infrastructure**: PostgreSQL (Async Database Layer) & Redis (Caching Layer)
-*   **Interface**: Modern Single Page Application (SPA Concept) with Glassmorphism UI
-*   **Document Intelligence**: Document Parser supporting PDF, DOCX, and Text Formats
-
----
-
-## ขั้นตอนการติดตั้ง (Deployment Guide)
-
-### 1. การกำหนดค่าระบบ (Configuration)
-สร้างไฟล์ `.env` ณ root directory และกำหนดค่าตัวแปรสภาพแวดล้อม:
-
-```env
-OPENROUTER_API_KEYS=sk-or-v1-xxxx...
-OPENROUTER_MODEL=arcee-ai/trinity-large-preview:free 
-DATABASE_URL=postgresql+asyncpg://user:pass@db:5432/quizsensei_db
+```mermaid
+graph TD
+    User([User]) --> UI[Frontend SPA]
+    UI -- "POST /upload" --> API[Document Service]
+    API -- "Extract Text / OCR" --> FS[(File System)]
+    
+    UI -- "POST /analyze" --> A1[Agent 1: Analyzer]
+    A1 -- "Read & Evaluate" --> FS
+    
+    UI -- "POST /generate" --> A2[Agent 2: Generator]
+    A2 --> A3[Agent 3: Auditor]
+    A3 -- "Rejected" --> A2
+    A3 -- "Approved" --> PG[(PostgreSQL)]
+    
+    UI -- "POST /submit" --> A4[Agent 4: Grader]
+    A4 --> PG
 ```
 
-### 2. การเริ่มการทำงาน (Execution)
-รันระบบผ่าน Docker Containerization เพื่อความเสถียรของสภาพแวดล้อม:
+| Agent | Role | Output |
+|-------|------|--------|
+| **Analyzer** | วิเคราะห์เนื้อหา, จำแนกระดับผู้เรียน, ประเมิน Content Sufficiency | Analysis JSON |
+| **Generator** | สร้างข้อสอบปรนัยตามระดับ Bloom's Taxonomy ที่กำหนด | Question Drafts |
+| **Auditor** | ตรวจสอบคุณภาพข้อสอบ, ตัวเลือกหลอก, ความสอดคล้องกับ Bloom's | Approved/Rejected |
+| **Grader** | วินิจฉัยคำตอบ, วิเคราะห์ Misconceptions, ให้ Feedback | Diagnostic Report |
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Backend | Python 3.12, FastAPI, Uvicorn |
+| LLM | OpenRouter API (`/v1/completions` + `/v1/chat/completions` for Vision) |
+| OCR | 3-Tier: `pypdf` → **LLM Vision** (`google/gemini-flash-1.5`) → **Tesseract** (`tha+eng`) |
+| Database | PostgreSQL (asyncpg), Redis |
+| Frontend | Vanilla JS SPA |
+| Infrastructure | Docker Compose, Multi-stage Build |
+
+## Quick Start
 
 ```bash
+cp .env.example .env    # Configure API keys
 docker compose up --build -d
+# http://localhost:8000
 ```
-เข้าสู่ระบบผ่าน Web Interface ได้ที่: **http://localhost:8000**
 
----
+**Required `.env` variables:**
+```env
+OPENROUTER_API_KEYS=sk-or-v1-xxxx
+OPENROUTER_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_MODEL_OCR=google/gemini-flash-1.5:free
+POSTGRES_USER=quizsensei
+POSTGRES_PASSWORD=quizsensei_secret
+```
 
-## โครงสร้างโปรเจกต์ (Project Structure)
+## Project Structure
 
-```text
+```
 app/
-├── core/               # Configuration and Shared Logic
-├── models/             # Database Schemas
-├── routers/            # API Endpoints (Exam & Document Management)
-├── services/           
-│   ├── analyzers/      # Analytical Agent Logic
-│   ├── generators/     # Question Generation Engine
-│   └── agents/         # Auditor and Diagnostic Grader
-frontend/               # User Experience and Interface Components
+├── core/              # Config, LLM client
+├── models/            # SQLAlchemy models (QuestionRecord, AnswerAttempt)
+├── routers/           # FastAPI endpoints (documents, exams)
+├── services/
+│   ├── extractors/    # PDF (3-tier OCR), DOCX, TXT extractors
+│   ├── analyzers/     # Agent 1: Content analysis
+│   ├── generators/    # Agent 2: Question generation
+│   └── agents/        # Agent 3: Auditor, Agent 4: Grader
+frontend/              # SPA (index.html, app.js, style.css)
 ```
 
+## Known Limitations
+
+| Issue | Impact | Mitigation |
+|-------|--------|------------|
+| File-based sidecar storage | ไม่รองรับ Horizontal Scaling | Migrate to PostgreSQL JSONB or Redis |
+| Synchronous pipeline orchestration | Browser-dependent; ปิดแท็บ = pipeline หยุด | Background task queue (Celery) |
+| Sequential DB writes | Data loss risk on partial failure | Batch insert with savepoints |
+| No user authentication | Guest-only; ไม่มี ownership isolation | Auth middleware + user model |
+
 ---
-© 2026 QuizSensei Project. Dedicated to Advanced Educational AI Research and Development.
+
+© 2026 QuizSensei Project

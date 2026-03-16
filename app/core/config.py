@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     OPENROUTER_MODEL: str
     OPENROUTER_MODEL_OCR: str = "google/gemini-flash-1.5:free" # Default fallback
     OPENROUTER_API_KEYS: str
+
+    # ── OCR Settings ─────────────────────────────────────────────────────
+    OCR_DPI: int = 300                  # DPI for pdf2image conversion
+    OCR_MIN_CHARS_THRESHOLD: int = 50   # Min chars to consider page as "has text"
+    OCR_MAX_IMAGE_SIZE: int = 1600      # Max pixel dimension for OCR images
     OPENROUTER_REFERER: str = "https://github.com/QuizSensei/Nectec26"
     OPENROUTER_TITLE: str = "QuizSensei Assessment Platform"
     
