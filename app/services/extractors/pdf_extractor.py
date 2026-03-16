@@ -1,3 +1,7 @@
+"""
+PDF text extraction strategy.
+Uses pdf2image and vision-based OCR (via LLM) as a primary extraction method for complex layouts.
+"""
 import logging
 import asyncio
 import base64

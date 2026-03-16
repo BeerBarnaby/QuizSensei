@@ -6,6 +6,11 @@ This MVP implementation uses a heuristic payload builder that strictly maps
 incorrect options to specific financial misconceptions.
 """
 
+"""
+Specialized generator for Financial Literacy questions.
+Extends base generation logic with domain-specific constraints for FL education.
+"""
+import json
 import uuid
 from typing import List, Dict, Any
 

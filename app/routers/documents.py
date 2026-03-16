@@ -1,4 +1,7 @@
-
+"""
+API routes for document management.
+Handles uploading, deleting, text extraction, analysis, and question generation for documents.
+"""
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path

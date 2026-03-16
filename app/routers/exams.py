@@ -1,8 +1,6 @@
 """
-app/routers/exams.py
-
-Exam & Analytics router.
-POST /exams/submit now uses Agent 4 (GraderAgent) for diagnostic grading.
+API routes for exam submissions and analytics.
+Uses GraderAgent to process student answers and provide diagnostic feedback.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status

@@ -1,7 +1,6 @@
 """
-app/schemas/analysis.py
-
-Pydantic schemas for the Phase 3 Document Analysis endpoints.
+Pydantic schemas for document analysis results.
+Defines the final structured outcome of the Phase 3 analysis process.
 """
 
 from typing import List, Optional

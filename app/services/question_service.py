@@ -1,9 +1,6 @@
 """
-app/services/question_service.py
-
-Service layer orchestrating the 4-Agent pipeline:
-  Agent 2 (Generator) → Agent 3 (Auditor)
-Now includes auto-regeneration loop if Auditor rejects questions.
+Service layer orchestrating the multi-agent question generation pipeline.
+Coordinates Agent 2 (Generator) and Agent 3 (Auditor) with automated retry/regeneration logic.
 """
 
 import json

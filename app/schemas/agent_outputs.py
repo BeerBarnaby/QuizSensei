@@ -1,7 +1,6 @@
 """
-app/schemas/agent_outputs.py
-
-Pydantic models for the structured outputs of each AI Agent in the pipeline.
+Pydantic schemas for structured AI agent outputs.
+Includes models for Analyzer, Auditor, and Grader agents in the pipeline.
 """
 from datetime import datetime
 from typing import Optional

@@ -1,9 +1,6 @@
 """
-app/schemas/question.py
-
-Pydantic schemas for Phase 4 Question Generation endpoints.
-Questions now include Agent 2 (design_reasoning, distractor_map)
-and Agent 3 (audit_status, audit_feedback) fields.
+Pydantic schemas for question generation.
+Includes models for generated drafts, distractor mapping, and pedagogical reasoning.
 """
 
 from typing import Any, Dict, List, Optional

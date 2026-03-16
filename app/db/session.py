@@ -1,3 +1,7 @@
+"""
+Database session management using SQLAlchemy and asyncpg.
+Provides the engine, session factory, and database session dependency for FastAPI.
+"""
 import logging
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import declarative_base

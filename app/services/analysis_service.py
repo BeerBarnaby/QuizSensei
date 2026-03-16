@@ -1,9 +1,6 @@
 """
-app/services/analysis_service.py
-
-Service layer for orchestrating the document analysis process.
-Reads the extraction file from Phase 2, maps it to the analyzer,
-and saves the output via the updated schemas.
+Service layer for orchestrating document analysis (Phase 3).
+Connects extraction results to the Financial Literacy analyzer and manages analysis sidecars.
 """
 
 import json

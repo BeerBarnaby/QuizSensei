@@ -6,6 +6,10 @@ Uses OpenRouter LLM to generate deeply-justified multiple-choice questions in Th
 Respects Audience Level and maps arbitrary easy/medium/hard difficulty to Bloom's taxonomy.
 """
 
+"""
+Question Generator powered by LLM (Agent 2).
+Transforms extracted text and analysis into structured diagnostic questions with rationale.
+"""
 import json
 import random
 import uuid

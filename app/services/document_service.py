@@ -1,8 +1,6 @@
 """
-app/services/document_service.py
-
-Service layer for handling document logic and extraction orchestration.
-Decouples business logic from HTTP route handlers.
+Service layer for orchestrating document storage and text extraction.
+Manages file persistence, sidecar JSON generation, and cleanup.
 """
 
 import json

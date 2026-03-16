@@ -1,3 +1,7 @@
+"""
+Main entry point for the QuizSensei FastAPI application.
+Configures middleware, routes, static file serving, and database initialization.
+"""
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

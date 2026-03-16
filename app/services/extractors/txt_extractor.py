@@ -1,4 +1,8 @@
 import aiofiles
+"""
+Plain text extraction strategy.
+Simple reader for .txt files using standard UTF-8 encoding.
+"""
 from pathlib import Path
 
 from app.services.extractors.base import BaseExtractor

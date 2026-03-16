@@ -1,3 +1,7 @@
+"""
+Pydantic schemas for document-related data.
+Defines models for file uploads, health checks, and text extraction responses.
+"""
 from datetime import datetime
 from pathlib import Path
 

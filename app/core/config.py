@@ -1,3 +1,7 @@
+"""
+Configuration management for the QuizSensei application.
+Handles environment variables, directory setup, and application-wide settings.
+"""
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Set

@@ -1,8 +1,6 @@
 """
-app/schemas/exam.py
-
-Pydantic schemas for the Exam & Analytics endpoints.
-SubmissionResult now carries Agent 4 (Grader) diagnostic output.
+Pydantic schemas for exam submissions and analytics.
+Defines models for student answers, grading results, and question analytics.
 """
 
 from typing import Optional

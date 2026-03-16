@@ -6,6 +6,10 @@ Classifies the document by FL topic/subtopic, Target Learner Level, and evaluate
 All output must be strictly in Thai.
 """
 
+"""
+Financial Literacy analyzer powered by LLM (Agent 1).
+Performs semantic analysis to identify topics, subtopics, and content sufficiency.
+"""
 import json
 import random
 import logging
