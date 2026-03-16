@@ -1,10 +1,3 @@
-"""
-app/services/analyzers/rule_based_analyzer.py
-
-A lightweight rule-based analyzer for Financial Literacy documents.
-Scores the document by matching predefined keywords.
-"""
-
 import re
 from typing import Dict, Any
 

@@ -1,8 +1,3 @@
-"""
-app/services/analyzers/base.py
-
-Defines the BaseAnalyzer interface for document content analysis.
-"""
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any

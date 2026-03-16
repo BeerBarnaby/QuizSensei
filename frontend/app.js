@@ -1,8 +1,3 @@
-/**
- * app.js – QuizSensei Frontend
- * Light Mode | Multi-Doc | Automated Pipeline with clear UX
- */
-
 'use strict';
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -25,29 +20,29 @@ const API = {
     return res.json();
   },
 
-  listDocuments:     ()         => API.request('GET',  '/documents/'),
-  uploadDocument:    (fd)       => API.request('POST', '/documents/upload', fd, true),
-  extractDocument:   (id)       => API.request('POST', `/documents/${id}/extract`),
-  getPreview:        (id)       => API.request('GET',  `/documents/${id}/preview`),
-  analyzeDocument:   (id)       => API.request('POST', `/documents/${id}/analyze`),
-  getAnalysis:       (id)       => API.request('GET',  `/documents/${id}/analysis`),
+  listDocuments: () => API.request('GET', '/documents/'),
+  uploadDocument: (fd) => API.request('POST', '/documents/upload', fd, true),
+  extractDocument: (id) => API.request('POST', `/documents/${id}/extract`),
+  getPreview: (id) => API.request('GET', `/documents/${id}/preview`),
+  analyzeDocument: (id) => API.request('POST', `/documents/${id}/analyze`),
+  getAnalysis: (id) => API.request('GET', `/documents/${id}/analysis`),
   generateQuestions: (id, body) => API.request('POST', `/documents/${id}/generate-questions`, body),
-  submitAnswer:      (body)     => API.request('POST', '/exams/submit', body),
-  deleteDocument:    (id)       => API.request('DELETE', `/documents/${id}`),
+  submitAnswer: (body) => API.request('POST', '/exams/submit', body),
+  deleteDocument: (id) => API.request('DELETE', `/documents/${id}`),
 };
 
 /* ══════════════════════════════════════════════════════════════════════
    STATE
    ══════════════════════════════════════════════════════════════════════ */
 const state = {
-  primaryDocId:    null,   // The main doc used for analyze + generate
-  extraDocIds:     [],     // Extra docs whose text will be merged during generation
-  analysisResult:  null,   // Last Agent 1 result for primary doc
-  questions:       [],
-  answers:         {},
-  graderOutputs:   {},
-  submitted:       false,
-  isProcessing:    false,
+  primaryDocId: null,   // The main doc used for analyze + generate
+  extraDocIds: [],     // Extra docs whose text will be merged during generation
+  analysisResult: null,   // Last Agent 1 result for primary doc
+  questions: [],
+  answers: {},
+  graderOutputs: {},
+  submitted: false,
+  isProcessing: false,
 };
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -55,22 +50,22 @@ const state = {
    ══════════════════════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
 const el = {
-  fileInput:     $('fileInput'),
-  docList:       $('docList'),
-  refreshDocs:   $('refreshDocs'),
-  emptyState:    $('emptyState'),
-  activePanel:   $('activePanel'),
-  panelTitle:    $('panelTitle'),
-  panelBadge:    $('panelBadge'),
-  charCount:     $('charCount'),
-  btnGenerate:   $('btnGenerate'),
-  btnRetry:      $('btnRetry'),
-  quizArea:      $('quizArea'),
-  quizResult:    $('quizResult'),
-  resultScore:   $('resultScore'),
-  resultMsg:     $('resultMsg'),
-  statusToast:   $('statusToast'),
-  statusText:    $('statusText'),
+  fileInput: $('fileInput'),
+  docList: $('docList'),
+  refreshDocs: $('refreshDocs'),
+  emptyState: $('emptyState'),
+  activePanel: $('activePanel'),
+  panelTitle: $('panelTitle'),
+  panelBadge: $('panelBadge'),
+  charCount: $('charCount'),
+  btnGenerate: $('btnGenerate'),
+  btnRetry: $('btnRetry'),
+  quizArea: $('quizArea'),
+  quizResult: $('quizResult'),
+  resultScore: $('resultScore'),
+  resultMsg: $('resultMsg'),
+  statusToast: $('statusToast'),
+  statusText: $('statusText'),
 };
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -83,7 +78,7 @@ function showToast(msg, isError = false) {
 }
 function hideToast(delay = 0) { setTimeout(() => el.statusToast.classList.add('hidden'), delay); }
 function escHtml(s) {
-  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -149,7 +144,7 @@ function checkLevelMismatch() {
   if (!warning || !state.analysisResult) return;
 
   const agentLevel = state.analysisResult.suggested_learner_level || '';
-  const userLevel  = $('qAudience')?.value || '';
+  const userLevel = $('qAudience')?.value || '';
 
   if (agentLevelEl) agentLevelEl.textContent = agentLevel || '(ไม่ทราบ)';
 
@@ -177,21 +172,21 @@ function renderDocList() {
     el.docList.innerHTML = '<li class="doc-list-empty">ยังไม่มีเอกสาร</li>';
     return;
   }
-  const icon = ext => ({ '.pdf':'📄', '.docx':'📝', '.doc':'📝', '.txt':'📃' }[ext] || '📎');
-  
+  const icon = ext => ({ '.pdf': '📄', '.docx': '📝', '.doc': '📝', '.txt': '📃' }[ext] || '📎');
+
   el.docList.innerHTML = _cachedDocs.map(d => {
     const isPrimary = d.document_id === state.primaryDocId;
-    const isExtra   = state.extraDocIds.includes(d.document_id);
+    const isExtra = state.extraDocIds.includes(d.document_id);
     let cls = 'doc-item';
     if (isPrimary) cls += ' active';
     else if (isExtra) cls += ' selected-extra';
-    
+
     return `
       <li class="${cls}" data-id="${escHtml(d.document_id)}">
         <div class="doc-icon">${icon(d.extension)}</div>
         <div style="overflow:hidden; flex:1;">
           <div class="doc-name">${escHtml(d.filename)}</div>
-          <div class="doc-meta">${(d.size_bytes/1024).toFixed(1)} KB${isPrimary ? ' • <strong style="color:var(--primary)">หลัก</strong>' : isExtra ? ' • <strong style="color:var(--success)">สำรอง</strong>' : ''}</div>
+          <div class="doc-meta">${(d.size_bytes / 1024).toFixed(1)} KB${isPrimary ? ' • <strong style="color:var(--primary)">หลัก</strong>' : isExtra ? ' • <strong style="color:var(--success)">สำรอง</strong>' : ''}</div>
         </div>
         <div class="doc-actions">
           ${isExtra ? `<div class="doc-check">✓</div>` : ''}
@@ -213,7 +208,7 @@ function renderDocList() {
 
 async function handleDeleteDoc(e, docId) {
   e.stopPropagation();
-  
+
   if (!confirm(`ยืนยันการลบเอกสาร "${docId}" หรือไม่? ข้อมูลที่วิเคราะห์และข้อสอบที่ประเมินแล้วจะถูกลบไปด้วย`)) {
     return;
   }
@@ -222,7 +217,7 @@ async function handleDeleteDoc(e, docId) {
   try {
     await API.deleteDocument(docId);
     showToast(`✅ ลบเอกสารสำเร็จ`, false);
-    
+
     // Clear state if the deleted doc is primary or extra
     if (state.primaryDocId === docId) {
       state.primaryDocId = null;
@@ -237,7 +232,7 @@ async function handleDeleteDoc(e, docId) {
         updateSufficiencyBanner();
       }
     }
-    
+
     await loadDocumentList();
     hideToast(2000);
   } catch (err) {
@@ -324,12 +319,12 @@ function showPanel(docId) {
   const ext = (docId.split('.').pop() || 'FILE').toUpperCase();
   el.panelBadge.textContent = ext;
   el.charCount.textContent = '—';
-  
+
   // Reset quiz area
   state.questions = []; state.answers = {}; state.graderOutputs = {}; state.submitted = false;
   el.quizArea.innerHTML = '';
   el.quizResult.classList.add('hidden');
-  
+
   switchStage('extraction');
 }
 
@@ -400,11 +395,11 @@ function renderAnalysis(data) {
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;">
       <div class="glass-card" style="margin-bottom:0; padding:16px; border-left:4px solid var(--primary);">
         <div style="font-size:11px; color:var(--text-dim); text-transform:uppercase;">หัวข้อหลัก</div>
-        <div style="font-weight:700; font-size:15px; color:var(--primary); margin-top:4px;">${escHtml(data.topic?.replace(/_/g,' ') || '-')}</div>
+        <div style="font-weight:700; font-size:15px; color:var(--primary); margin-top:4px;">${escHtml(data.topic?.replace(/_/g, ' ') || '-')}</div>
       </div>
       <div class="glass-card" style="margin-bottom:0; padding:16px;">
         <div style="font-size:11px; color:var(--text-dim); text-transform:uppercase;">หัวข้อย่อย</div>
-        <div style="font-weight:600; font-size:14px; margin-top:4px;">${escHtml(data.subtopic?.replace(/_/g,' ') || '-')}</div>
+        <div style="font-weight:600; font-size:14px; margin-top:4px;">${escHtml(data.subtopic?.replace(/_/g, ' ') || '-')}</div>
       </div>
     </div>
 
@@ -443,8 +438,8 @@ function updateSufficiencyBanner() {
   if (!banner || !state.analysisResult) return;
 
   const sufficient = state.analysisResult.content_sufficiency;
-  const extraCount  = state.extraDocIds.length;
-  const goBtn       = $('btnGoToGenerate');
+  const extraCount = state.extraDocIds.length;
+  const goBtn = $('btnGoToGenerate');
 
   if (sufficient) {
     banner.innerHTML = `
@@ -484,9 +479,9 @@ async function handleGenerate() {
   el.quizArea.innerHTML = `<div class="glass-card" style="text-align:center; color:var(--text-muted); padding:40px;">Agent 2 กำลังออกแบบข้อสอบ... Agent 3 กำลังตรวจสอบคุณภาพ...</div>`;
 
   const body = {
-    number_of_questions:    parseInt($('qCount').value) || 3,
-    target_audience_level:  $('qAudience').value || 'วัยทำงาน',
-    difficulty_filter:      $('qDifficulty').value || 'medium',
+    number_of_questions: parseInt($('qCount').value) || 3,
+    target_audience_level: $('qAudience').value || 'วัยทำงาน',
+    difficulty_filter: $('qDifficulty').value || 'medium',
     additional_document_ids: state.extraDocIds,
   };
 
@@ -522,7 +517,7 @@ function renderQuiz(res) {
   el.quizArea.innerHTML = rejectedNote + state.questions.map((q, i) => `
     <div class="q-card" id="qcard-${q.question_id}">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <strong style="color:var(--primary);">ข้อที่ ${i+1}</strong>
+        <strong style="color:var(--primary);">ข้อที่ ${i + 1}</strong>
         <div style="display:flex; gap:6px;">
           <span class="badge-premium badge-blue">${escHtml(q.difficulty)}</span>
           ${q.bloom_level ? `<span class="badge-premium badge-purple">🎓 ${escHtml(q.bloom_level)}</span>` : ''}
@@ -570,7 +565,7 @@ function renderQuiz(res) {
    QUIZ – SUBMIT (Agent 4)
    ══════════════════════════════════════════════════════════════════════ */
 async function handleSubmitQuiz() {
-  const total    = state.questions.length;
+  const total = state.questions.length;
   const answered = Object.keys(state.answers).length;
 
   if (answered < total) {
@@ -586,9 +581,9 @@ async function handleSubmitQuiz() {
   for (const q of state.questions) {
     try {
       const out = await API.submitAnswer({
-        question_id:         q.question_id,
+        question_id: q.question_id,
         selected_choice_key: state.answers[q.question_id],
-        user_id:             'guest',
+        user_id: 'guest',
       });
       state.graderOutputs[q.question_id] = out;
       if (out.is_correct) score++;
@@ -599,9 +594,9 @@ async function handleSubmitQuiz() {
       const isCorrect = key === q.correct_answer;
       if (isCorrect) score++;
       renderDiagnostic(q, {
-        is_correct:            isCorrect,
-        correct_answer:        q.correct_answer,
-        diagnostic_message:    isCorrect ? `✓ ถูกต้อง! ${q.rationale_for_correct_answer || ''}` : `✗ คำตอบที่ถูกต้องคือ ${q.correct_answer}\n${q.rationale_for_correct_choices || ''}`,
+        is_correct: isCorrect,
+        correct_answer: q.correct_answer,
+        diagnostic_message: isCorrect ? `✓ ถูกต้อง! ${q.rationale_for_correct_answer || ''}` : `✗ คำตอบที่ถูกต้องคือ ${q.correct_answer}\n${q.rationale_for_correct_choices || ''}`,
         misconception_identified: null,
         suggested_review_topic: null,
       });
@@ -616,7 +611,7 @@ async function handleSubmitQuiz() {
   el.resultScore.textContent = `${pct}%`;
   el.resultMsg.textContent = pct >= 80 ? '🎉 ยอดเยี่ยม! คุณเข้าใจเนื้อหานี้ดีมาก'
     : pct >= 50 ? '👍 ดี ยังมีบางหัวข้อที่ควรทบทวน'
-    : '📖 ลองทบทวนเนื้อหาก่อนทำใหม่นะครับ';
+      : '📖 ลองทบทวนเนื้อหาก่อนทำใหม่นะครับ';
   el.quizResult.classList.remove('hidden');
   el.quizResult.scrollIntoView({ behavior: 'smooth' });
   hideToast();
@@ -637,7 +632,7 @@ function renderDiagnostic(q, data) {
       <div class="diag-title" style="color:${data.is_correct ? 'var(--success)' : 'var(--danger)'};">
         ${data.is_correct ? '✨ ถูกต้อง!' : '❌ ยังไม่ถูก'}
       </div>
-      <div class="diag-text">${escHtml(data.diagnostic_message || '').replace(/\n/g,'<br>')}</div>
+      <div class="diag-text">${escHtml(data.diagnostic_message || '').replace(/\n/g, '<br>')}</div>
       ${data.suggested_review_topic ? `<div style="margin-top:8px; font-size:12px; color:var(--primary);">🔖 ทบทวนหัวข้อ: <strong>${escHtml(data.suggested_review_topic)}</strong></div>` : ''}
     </div>`;
   box.classList.remove('hidden');

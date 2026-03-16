@@ -1,9 +1,3 @@
-"""
-app/services/extractors/txt_extractor.py
-
-Extractor implementation for plain text (.txt) files.
-"""
-
 import aiofiles
 from pathlib import Path
 

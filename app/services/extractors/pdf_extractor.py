@@ -1,12 +1,3 @@
-"""
-app/services/extractors/pdf_extractor.py
-
-Extractor implementation for PDF files using pypdf with LLM Vision OCR fallback.
-- Uses pypdf for digital text extraction (fast, no API cost)
-- Falls back to LLM Vision OCR for scanned/image-based pages
-- Includes Tesseract as a secondary local fallback if available
-"""
-
 import logging
 import asyncio
 import base64

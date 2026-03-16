@@ -1,10 +1,3 @@
-"""
-app/services/extractors/docx_extractor.py
-
-Extractor implementation for Word documents (.docx) using python-docx.
-Supports both paragraph text and embedded image OCR.
-"""
-
 import asyncio
 import io
 import base64

@@ -1,11 +1,3 @@
-"""
-app/services/agents/grader_agent.py
-
-Agent 4: Answer Grader.
-Diagnoses student answers using the distractor_map produced by Agent 2.
-Fully in Thai.
-"""
-
 import logging
 from typing import Dict, Any, Optional
 

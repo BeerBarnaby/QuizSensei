@@ -1,9 +1,3 @@
-"""
-app/services/generators/base.py
-
-Defines the BaseQuestionGenerator interface for drafting exam questions.
-"""
-
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 

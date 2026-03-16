@@ -1,9 +1,3 @@
-"""
-app/services/extractors/base.py
-
-Defines the BaseExtractor interface for all document type extractors.
-"""
-
 from abc import ABC, abstractmethod
 from pathlib import Path
 

@@ -1,11 +1,3 @@
-"""
-app/services/agents/auditor_agent.py
-
-Agent 3: Question Quality Auditor.
-Reviews questions produced by Agent 2. 
-Ensures Audience level, Bloom's difficulty map, and Thai language are respected.
-"""
-
 import json
 import random
 import logging

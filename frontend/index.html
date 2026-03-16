@@ -13,9 +13,7 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo-container">
-                <div class="logo-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                </div>
+                <img src="/frontend/logo.png" alt="QuizSensei Logo" class="logo-icon-img">
                 <div class="logo-text">QuizSensei</div>
             </div>
 
@@ -89,6 +87,10 @@
 
                 <!-- Stage 1: Extraction -->
                 <section id="view-extraction" class="stage-content">
+                    <div class="stage-title-group">
+                        <h2 style="font-size: 24px; color: var(--primary);">Step 1: Text Extraction</h2>
+                        <p style="color: var(--text-muted);">สกัดข้อความจากเอกสารของคุณโดยใช้ Digital Extraction และ OCR Fallback</p>
+                    </div>
                     <div class="glass-card">
                         <div class="heading-outfit" style="margin-bottom: 16px;">สกัดข้อความสำเร็จ</div>
                         <div class="preview-text-box" id="extractedTextPreview">...</div>
@@ -100,6 +102,10 @@
 
                 <!-- Stage 2: Analysis -->
                 <section id="view-analysis" class="stage-content">
+                    <div class="stage-title-group">
+                        <h2 style="font-size: 24px; color: var(--purple);">Step 2: Content Analysis</h2>
+                        <p style="color: var(--text-muted);">Agent 1 กำลังตรวจสอบความเพียงพอและวิเคราะห์ระดับเนื้อหาที่เหมาะสม</p>
+                    </div>
                     <div id="analysisResult" class="glass-card">
                         <!-- Rendered via JS -->
                         <p>กำลังวิเคราะห์เนื้อหา...</p>
@@ -117,6 +123,10 @@
 
                 <!-- Stage 3: Generate -->
                 <section id="view-quiz" class="stage-content">
+                    <div class="stage-title-group">
+                        <h2 style="font-size: 24px; color: var(--primary);">Step 3: Quiz Generation</h2>
+                        <p style="color: var(--text-muted);">ปรับจูนค่าคอนฟิกและสร้างข้อสอบคุณภาพสูงโดย Agent 2 และ Agent 3</p>
+                    </div>
 
                     <!-- 3a: Document Content Review -->
                     <div class="glass-card" style="margin-bottom:20px;">
