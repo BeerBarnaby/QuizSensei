@@ -1,86 +1,120 @@
-# QuizSensei — Multi-Agent LLM Assessment Platform
+# 🧠 QuizSensei — AI-Driven Assessment Platform
 
-ระบบสร้างข้อสอบอัตโนมัติเชิงวินิจฉัยด้านความรู้ทางการเงิน (Financial Literacy) ผ่าน Multi-Agent LLM Pipeline พร้อมระบบ OCR สำหรับเอกสารภาษาไทย
+QuizSensei is a next-generation assessment platform that leverages a **Multi-Agent LLM Pipeline** to transform static documents into interactive, diagnostic quizzes. Designed specifically for the **Financial Literacy** domain, it employs specialized AI agents to ensure pedagogical quality and diagnostic depth.
 
-## System Architecture
+---
+
+## 🚀 Key Features
+
+*   **Multi-Agent Intelligence**: Orchestrates 4 specialized agents (Analyzer, Generator, Auditor, Grader) to handle the full assessment lifecycle.
+*   **3-Tier Intelligent OCR**: 
+    1.  **Digital Extraction**: Direct text parsing for high-fidelity documents.
+    2.  **Vision-based OCR**: Powered by Google Gemini Flash 1.5 for complex layouts and handwritten notes.
+    3.  **Tesseract Fallback**: Robust local OCR for offline or emergency processing.
+*   **Bloom's Taxonomy Alignment**: Generates questions that target specific cognitive levels (Remember, Analyze, Create).
+*   **Diagnostic Feedback**: Identifies specific student misconceptions and provides targeted learning guidance.
+*   **Privacy-First Integration**: Clean LLM calls via OpenRouter with no identity headers (Referer/Title) and unified completions endpoints.
+
+---
+
+## 🏗️ System Architecture
+
+The platform follows a clean, decoupled architecture using a hybrid storage model (Filesystem Sidecar + Relational Database).
 
 ```mermaid
 graph TD
     User([User]) --> UI[Frontend SPA]
-    UI -- "POST /upload" --> API[Document Service]
-    API -- "Extract Text / OCR" --> FS[(File System)]
+    UI -- "1. Upload" --> API[Document Service]
+    API -- "Extract / OCR" --> FS[(Filesystem)]
     
-    UI -- "POST /analyze" --> A1[Agent 1: Analyzer]
-    A1 -- "Read & Evaluate" --> FS
+    UI -- "2. Analyze" --> A1[Agent 1: Analyzer]
+    A1 -- "Evaluate Sufficiency" --> FS
     
-    UI -- "POST /generate" --> A2[Agent 2: Generator]
+    UI -- "3. Generate" --> A2[Agent 2: Generator]
     A2 --> A3[Agent 3: Auditor]
-    A3 -- "Rejected" --> A2
-    A3 -- "Approved" --> PG[(PostgreSQL)]
+    A3 -- "Pedagogical Check" --> A2
+    A3 -- "Save Draft" --> DB[(PostgreSQL)]
     
-    UI -- "POST /submit" --> A4[Agent 4: Grader]
-    A4 --> PG
+    UI -- "4. Submit" --> A4[Agent 4: Grader]
+    A4 -- "Diagnostic Feedback" --> DB
 ```
 
-| Agent | Role | Output |
-|-------|------|--------|
-| **Analyzer** | วิเคราะห์เนื้อหา, จำแนกระดับผู้เรียน, ประเมิน Content Sufficiency | Analysis JSON |
-| **Generator** | สร้างข้อสอบปรนัยตามระดับ Bloom's Taxonomy ที่กำหนด | Question Drafts |
-| **Auditor** | ตรวจสอบคุณภาพข้อสอบ, ตัวเลือกหลอก, ความสอดคล้องกับ Bloom's | Approved/Rejected |
-| **Grader** | วินิจฉัยคำตอบ, วิเคราะห์ Misconceptions, ให้ Feedback | Diagnostic Report |
+### The 4-Agent Pipeline
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Backend | Python 3.12, FastAPI, Uvicorn |
-| LLM | OpenRouter API (`/v1/completions` + `/v1/chat/completions` for Vision) |
-| OCR | 3-Tier: `pypdf` → **LLM Vision** (`google/gemini-flash-1.5`) → **Tesseract** (`tha+eng`) |
-| Database | PostgreSQL (asyncpg), Redis |
-| Frontend | Vanilla JS SPA |
-| Infrastructure | Docker Compose, Multi-stage Build |
-
-## Quick Start
-
-```bash
-cp .env.example .env    # Configure API keys
-docker compose up --build -d
-# http://localhost:8000
-```
-
-**Required `.env` variables:**
-```env
-OPENROUTER_API_KEYS=sk-or-v1-xxxx
-OPENROUTER_MODEL=nvidia/nemotron-3-super-120b-a12b:free
-OPENROUTER_MODEL_OCR=google/gemini-flash-1.5:free
-POSTGRES_USER=quizsensei
-POSTGRES_PASSWORD=quizsensei_secret
-```
-
-## Project Structure
-
-```
-app/
-├── core/              # Config, LLM client
-├── models/            # SQLAlchemy models (QuestionRecord, AnswerAttempt)
-├── routers/           # FastAPI endpoints (documents, exams)
-├── services/
-│   ├── extractors/    # PDF (3-tier OCR), DOCX, TXT extractors
-│   ├── analyzers/     # Agent 1: Content analysis
-│   ├── generators/    # Agent 2: Question generation
-│   └── agents/        # Agent 3: Auditor, Agent 4: Grader
-frontend/              # SPA (index.html, app.js, style.css)
-```
-
-## Known Limitations
-
-| Issue | Impact | Mitigation |
-|-------|--------|------------|
-| File-based sidecar storage | ไม่รองรับ Horizontal Scaling | Migrate to PostgreSQL JSONB or Redis |
-| Synchronous pipeline orchestration | Browser-dependent; ปิดแท็บ = pipeline หยุด | Background task queue (Celery) |
-| Sequential DB writes | Data loss risk on partial failure | Batch insert with savepoints |
-| No user authentication | Guest-only; ไม่มี ownership isolation | Auth middleware + user model |
+| Agent | Name | Responsibility |
+| :--- | :--- | :--- |
+| **Agent 1** | **Analyzer** | Classifies topics, determines learner levels, and gates content sufficiency. |
+| **Agent 2** | **Generator** | Transforms text into multiple-choice questions with diagnostic distractors. |
+| **Agent 3** | **Auditor** | Performs quality control on pedagogical value and target audience alignment. |
+| **Agent 4** | **Grader** | Analyzes answers, identifies precise misconceptions, and provides feedback. |
 
 ---
 
-© 2026 QuizSensei Project
+## 💻 Tech Stack
+
+- **Backend**: Python 3.12, FastAPI, SQLAlchemy (Asyncpg)
+- **Database**: PostgreSQL (Relational), Redis (Optional Cache)
+- **AI/LLM**: OpenRouter (Unified `/v1/completions` endpoint)
+- **Frontend**: Premium Vanilla JavaScript SPA (Vite-ready architecture)
+- **Infrastructure**: Docker Compose, Multi-stage builds
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+- Docker & Docker Compose
+- OpenRouter API Key
+
+### Installation
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/QuizSensei/Nectec26.git
+    cd Nectec26
+    ```
+
+2.  **Configure Environment**:
+    ```bash
+    cp .env.example .env
+    ```
+    Update `.env` with your API keys:
+    ```env
+    OPENROUTER_API_KEYS="sk-or-v1-..."
+    OPENROUTER_URL="https://openrouter.ai/api/v1/completions"
+    OPENROUTER_MODEL="nvidia/nemotron-3-super-120b-a12b:free"
+    ```
+
+3.  **Launch the System**:
+    ```bash
+    docker compose up --build -d
+    ```
+    Access the UI at `http://localhost:8000`
+
+---
+
+## 📁 Project Structure
+
+```text
+app/
+├── core/              # Configuration & Unified LLM Logic
+├── db/                # Database sessions & Base models
+├── models/            # SQLAlchemy database schemas
+├── routers/           # FastAPI API endpoints
+├── schemas/           # Pydantic data validation models
+└── services/          # Core Business Logic
+    ├── agents/        # Agent 3 (Auditor) & Agent 4 (Grader)
+    ├── analyzers/     # Agent 1 (Analyzer)
+    ├── extractors/    # 3-Tier OCR Logic (PDF, DOCX, TXT)
+    └── generators/    # Agent 2 (Question Generator)
+frontend/              # Premium SPA (index.html, app.js, style.css)
+```
+
+---
+
+## 🔒 Security & Privacy
+
+QuizSensei respects user privacy and API security:
+- **Zero-Identity Headers**: All LLM calls reach OpenRouter without `Referer` or `Title` headers.
+- **Unified Endpoint**: Uses the stateless `/v1/completions` endpoint for increased consistency across models.
+- **Sidecar Isolation**: Extracted text is stored in ephemeral sidecar files, isolated from the primary database.
