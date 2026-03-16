@@ -1,6 +1,6 @@
 """
-Core LLM integration layer for communication with OpenRouter APIs.
-Provides utilities for text completions, JSON extraction, and vision-based OCR.
+Core LLM integration layer.
+Provides utilities for communicating with OpenRouter APIs for completions and JSON extraction.
 """
 import json
 import random

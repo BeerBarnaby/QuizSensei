@@ -5,6 +5,10 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap');
 
+/* ══════════════════════════════════════════════════════════════════════
+   QUIZ SENSEI - STYLING SYSTEM
+   Modern, glassmorphic UI styles using CSS variables and premium typography.
+   ══════════════════════════════════════════════════════════════════════ */
 :root {
     /* Color Palette */
     --bg-page:     #f4f7fa;

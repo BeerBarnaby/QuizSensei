@@ -1,7 +1,5 @@
 """
-Financial Literacy analyzer powered by LLM (Agent 1).
-Performs semantic analysis to identify topics, subtopics, and content sufficiency.
-Classifies the document by FL topic/subtopic, Target Learner Level, and evaluates Content Sufficiency.
+Agent 1 (Analyzer) - Analyzes document text for financial literacy topics, learner level, and content sufficiency.
 """
 import json
 import random

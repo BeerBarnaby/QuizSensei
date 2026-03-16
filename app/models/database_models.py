@@ -1,3 +1,6 @@
+"""
+SQLAlchemy database models for storing questions, answer attempts, and analytics data.
+"""
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, JSON, Text, ForeignKey
 from sqlalchemy.orm import relationship

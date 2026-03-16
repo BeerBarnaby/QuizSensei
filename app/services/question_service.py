@@ -1,6 +1,6 @@
 """
-Service layer orchestrating the multi-agent question generation pipeline.
-Coordinates Agent 2 (Generator) and Agent 3 (Auditor) with automated retry/regeneration logic.
+Service layer for question generation.
+Orchestrates Agent 2 (Generator) and Agent 3 (Auditor) pipeline.
 """
 
 import json

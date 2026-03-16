@@ -1,6 +1,6 @@
 """
 Main entry point for the QuizSensei FastAPI application.
-Configures middleware, routes, static file serving, and database initialization.
+Handles app factory, middleware, router inclusion, and database initialization.
 """
 from pathlib import Path
 from fastapi import FastAPI

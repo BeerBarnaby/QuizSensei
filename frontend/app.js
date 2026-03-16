@@ -1,8 +1,8 @@
-'use strict';
-
 /* ══════════════════════════════════════════════════════════════════════
-   API CLIENT
+   QUIZ SENSEI - MAIN FRONTEND LOGIC
+   Manages application state, API communication, and dynamic UI rendering.
    ══════════════════════════════════════════════════════════════════════ */
+'use strict';
 const API = {
   base: '/api/v1',
 

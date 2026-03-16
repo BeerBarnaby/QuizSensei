@@ -1,6 +1,6 @@
 """
-Service layer for orchestrating document analysis (Phase 3).
-Connects extraction results to the Financial Literacy analyzer and manages analysis sidecars.
+Service layer for document analysis.
+Coordinates extraction data with Agent 1 (Analyzer).
 """
 
 import json

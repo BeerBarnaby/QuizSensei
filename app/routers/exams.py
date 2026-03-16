@@ -1,6 +1,6 @@
 """
-API routes for exam submissions and analytics.
-Uses GraderAgent to process student answers and provide diagnostic feedback.
+API routes for exam sessions.
+Handles student answer submissions and diagnostic grading via Agent 4 (Grader Agent).
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status

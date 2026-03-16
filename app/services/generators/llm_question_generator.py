@@ -1,7 +1,5 @@
 """
-Question Generator powered by LLM (Agent 2).
-Transforms extracted text and analysis into structured diagnostic questions with rationale.
-Respects Audience Level and maps difficulty to Bloom's taxonomy.
+Agent 2 (Generator) - Generates structured financial literacy questions with diagnostic distractors based on source text.
 """
 import json
 import random

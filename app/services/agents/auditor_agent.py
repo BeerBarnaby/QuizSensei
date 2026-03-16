@@ -1,6 +1,5 @@
 """
-Auditor Agent (Agent 3) for pedagogical quality control.
-Evaluates generated questions for accuracy, pedagogical value, and target audience alignment.
+Agent 3 (Auditor) - Performs quality control on generated questions, ensuring alignment with pedagogical goals and target audience.
 """
 import json
 import random

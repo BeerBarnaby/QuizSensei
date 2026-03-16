@@ -1,6 +1,5 @@
 """
-API routes for document management.
-Handles uploading, deleting, text extraction, analysis, and question generation for documents.
+API routes for document lifecycle: upload, list, delete, extract, analyze, and generate questions.
 """
 import uuid
 from datetime import datetime, timezone

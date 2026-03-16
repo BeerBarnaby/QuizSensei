@@ -1,6 +1,6 @@
 """
-Service layer for orchestrating document storage and text extraction.
-Manages file persistence, sidecar JSON generation, and cleanup.
+Service layer for document management.
+Orchestrates file storage, extraction strategies, and cleanup.
 """
 
 import json

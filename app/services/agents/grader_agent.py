@@ -1,6 +1,5 @@
 """
-Grader Agent (Agent 4) for diagnostic feedback.
-Analyzes student answers to identify misconceptions and provide personalized learning guidance.
+Agent 4 (Grader) - Provides zero-cost diagnostic feedback by mapping student answers to identified misconceptions.
 """
 import logging
 from typing import Dict, Any, Optional
