@@ -43,12 +43,10 @@ def call_openrouter_completions(
     api_key = get_llm_api_key()
     target_model = model or settings.OPENROUTER_MODEL
     
-    url = "https://openrouter.ai/api/v1/completions"
+    url = settings.OPENROUTER_URL
     headers = {
         "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": settings.OPENROUTER_REFERER,
-        "X-Title": settings.OPENROUTER_TITLE
+        "Content-Type": "application/json"
     }
 
     payload = {
@@ -137,12 +135,10 @@ def call_openrouter_vision(
     api_key = get_llm_api_key()
     target_model = model or settings.OPENROUTER_MODEL_OCR
     
-    url = "https://openrouter.ai/api/v1/chat/completions"
+    url = settings.OPENROUTER_URL
     headers = {
         "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": settings.OPENROUTER_REFERER,
-        "X-Title": settings.OPENROUTER_TITLE
+        "Content-Type": "application/json"
     }
 
     payload = {
