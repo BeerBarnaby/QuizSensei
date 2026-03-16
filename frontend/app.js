@@ -100,7 +100,11 @@ function switchStage(stage) {
 
   document.querySelectorAll('.stage-content').forEach(v => v.classList.remove('active'));
   const target = $(`view-${stage}`);
-  if (target) target.classList.add('active');
+  if (target) {
+    target.classList.add('active');
+    // Scroll stage to top for fresh view
+    document.querySelector('main.stage')?.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   // Populate Stage 3 preview whenever user enters it
   if (stage === 'quiz') populateQuizStage();
@@ -368,8 +372,9 @@ async function startPrimaryPipeline(docId) {
     hideToast(2000);
 
   } catch (err) {
-    showToast(`❌ ${err.message}`, true);
-    hideToast(4000);
+    console.error('Pipeline Error:', err);
+    showToast(`Oops! ${err.message}`, true);
+    hideToast(5000);
   } finally {
     state.isProcessing = false;
   }
@@ -629,11 +634,11 @@ function renderDiagnostic(q, data) {
 
   box.innerHTML = `
     <div class="diag-box" style="border-color:${data.is_correct ? 'var(--success)' : 'var(--danger)'}; background:${data.is_correct ? '#f0fdf4' : '#fff1f2'};">
-      <div class="diag-title" style="color:${data.is_correct ? 'var(--success)' : 'var(--danger)'};">
-        ${data.is_correct ? '✨ ถูกต้อง!' : '❌ ยังไม่ถูก'}
+      <div class="diag-title" style="color:${data.is_correct ? 'var(--success)' : 'var(--danger)'}; font-size: 14px; display:flex; align-items:center; gap:8px;">
+        ${data.is_correct ? '✨ ถูกต้อง! (Agent 4 ผ่าน)' : '❌ ยังไม่ถูกต้อง (Agent 4 แนะนำ)'}
       </div>
-      <div class="diag-text">${escHtml(data.diagnostic_message || '').replace(/\n/g, '<br>')}</div>
-      ${data.suggested_review_topic ? `<div style="margin-top:8px; font-size:12px; color:var(--primary);">🔖 ทบทวนหัวข้อ: <strong>${escHtml(data.suggested_review_topic)}</strong></div>` : ''}
+      <div class="diag-text" style="margin-top:8px;">${escHtml(data.diagnostic_message || '').replace(/\n/g, '<br>')}</div>
+      ${data.suggested_review_topic ? `<div style="margin-top:12px; padding-top:8px; border-top:1px solid rgba(0,0,0,0.05); font-size:12px; color:var(--primary);">💡 หัวข้อที่ควรทบทวน: <strong>${escHtml(data.suggested_review_topic)}</strong></div>` : ''}
     </div>`;
   box.classList.remove('hidden');
 }
