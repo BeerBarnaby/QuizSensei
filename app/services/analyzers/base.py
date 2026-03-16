@@ -1,4 +1,7 @@
-
+"""
+Base interface for document analyzers.
+Defines the required protocol for content classification and sufficiency evaluation.
+"""
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 

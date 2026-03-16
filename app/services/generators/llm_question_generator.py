@@ -1,14 +1,7 @@
 """
-app/services/generators/llm_question_generator.py
-
-Agent 2: Financial Literacy Question Generator.
-Uses OpenRouter LLM to generate deeply-justified multiple-choice questions in Thai.
-Respects Audience Level and maps arbitrary easy/medium/hard difficulty to Bloom's taxonomy.
-"""
-
-"""
 Question Generator powered by LLM (Agent 2).
 Transforms extracted text and analysis into structured diagnostic questions with rationale.
+Respects Audience Level and maps difficulty to Bloom's taxonomy.
 """
 import json
 import random

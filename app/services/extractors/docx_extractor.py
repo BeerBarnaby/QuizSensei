@@ -1,10 +1,10 @@
-import asyncio
-import io
-import base64
 """
 DOCX text extraction strategy.
 Uses python-docx to parse and extract structured text from Microsoft Word documents.
 """
+import asyncio
+import io
+import base64
 import logging
 from pathlib import Path
 import docx

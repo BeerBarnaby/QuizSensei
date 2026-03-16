@@ -1,3 +1,7 @@
+"""
+Base interface for all file text extractors.
+Defines the standard asynchronous extraction protocol for different file formats.
+"""
 from abc import ABC, abstractmethod
 from pathlib import Path
 

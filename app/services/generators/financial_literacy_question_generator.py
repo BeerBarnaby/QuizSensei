@@ -1,14 +1,7 @@
 """
-app/services/generators/financial_literacy_question_generator.py
-
-Generates structured diagnostic questions based on Financial Literacy taxonomy.
-This MVP implementation uses a heuristic payload builder that strictly maps
-incorrect options to specific financial misconceptions.
-"""
-
-"""
 Specialized generator for Financial Literacy questions.
 Extends base generation logic with domain-specific constraints for FL education.
+Maps incorrect options to specific financial misconceptions.
 """
 import json
 import uuid

@@ -1,14 +1,7 @@
 """
-app/services/analyzers/llm_financial_literacy_analyzer.py
-
-Agent 1: Analyzer
-Classifies the document by FL topic/subtopic, Target Learner Level, and evaluates Content Sufficiency for question generation.
-All output must be strictly in Thai.
-"""
-
-"""
 Financial Literacy analyzer powered by LLM (Agent 1).
 Performs semantic analysis to identify topics, subtopics, and content sufficiency.
+Classifies the document by FL topic/subtopic, Target Learner Level, and evaluates Content Sufficiency.
 """
 import json
 import random
