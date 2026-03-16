@@ -33,6 +33,7 @@ const API = {
   getAnalysis:       (id)       => API.request('GET',  `/documents/${id}/analysis`),
   generateQuestions: (id, body) => API.request('POST', `/documents/${id}/generate-questions`, body),
   submitAnswer:      (body)     => API.request('POST', '/exams/submit', body),
+  deleteDocument:    (id)       => API.request('DELETE', `/documents/${id}`),
 };
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -192,13 +193,57 @@ function renderDocList() {
           <div class="doc-name">${escHtml(d.filename)}</div>
           <div class="doc-meta">${(d.size_bytes/1024).toFixed(1)} KB${isPrimary ? ' • <strong style="color:var(--primary)">หลัก</strong>' : isExtra ? ' • <strong style="color:var(--success)">สำรอง</strong>' : ''}</div>
         </div>
-        ${!isPrimary ? `<div class="doc-check">${isExtra ? '✓' : ''}</div>` : ''}
+        <div class="doc-actions">
+          ${isExtra ? `<div class="doc-check">✓</div>` : ''}
+          <button class="doc-delete-btn" title="ลบเอกสาร" data-del-id="${escHtml(d.document_id)}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
       </li>`;
   }).join('');
 
   el.docList.querySelectorAll('.doc-item').forEach(item => {
     item.addEventListener('click', () => handleDocClick(item.dataset.id));
   });
+
+  el.docList.querySelectorAll('.doc-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => handleDeleteDoc(e, btn.dataset.delId));
+  });
+}
+
+async function handleDeleteDoc(e, docId) {
+  e.stopPropagation();
+  
+  if (!confirm(`ยืนยันการลบเอกสาร "${docId}" หรือไม่? ข้อมูลที่วิเคราะห์และข้อสอบที่ประเมินแล้วจะถูกลบไปด้วย`)) {
+    return;
+  }
+
+  showToast(`⏳ กำลังลบเอกสาร ${docId}...`);
+  try {
+    await API.deleteDocument(docId);
+    showToast(`✅ ลบเอกสารสำเร็จ`, false);
+    
+    // Clear state if the deleted doc is primary or extra
+    if (state.primaryDocId === docId) {
+      state.primaryDocId = null;
+      state.analysisResult = null;
+      state.extraDocIds = [];
+      el.emptyState.classList.remove('hidden');
+      el.activePanel.classList.add('hidden');
+    } else {
+      const idx = state.extraDocIds.indexOf(docId);
+      if (idx !== -1) {
+        state.extraDocIds.splice(idx, 1);
+        updateSufficiencyBanner();
+      }
+    }
+    
+    await loadDocumentList();
+    hideToast(2000);
+  } catch (err) {
+    showToast(`❌ ลบเอกสารไม่สำเร็จ: ${err.message}`, true);
+    hideToast(3500);
+  }
 }
 
 /**

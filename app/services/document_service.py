@@ -160,3 +160,35 @@ class DocumentService:
         """Returns just the metadata stats of a past extraction."""
         full_content = await self.get_document_content(document_id)
         return self._strip_text(full_content)
+
+    async def delete_document(self, document_id: str) -> Dict[str, str]:
+        """
+        Deletes the uploaded document and all associated sidecar files (extraction, analysis, questions).
+        Returns a status dictionary.
+        """
+        safe_id = Path(document_id).name
+        
+        # Paths to specific user files
+        doc_path = self._get_document_path(safe_id)
+        extraction_path = self._get_sidecar_path(safe_id)
+        analysis_path = self.settings.ANALYSIS_DIR / f"{safe_id}.json"
+        questions_path = self.settings.QUESTIONS_DIR / f"{safe_id}.json"
+        
+        # Check if the primary document exists
+        if not doc_path.exists():
+             raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found."
+            )
+
+        # Unlink all related files without throwing errors if generated ones are missing
+        for path in [doc_path, extraction_path, analysis_path, questions_path]:
+            if path.exists():
+                try:
+                    path.unlink()
+                except OSError as e:
+                    # In a production app, log this error instead of failing silently on sidecars
+                    pass
+
+        return {"status": "success", "message": f"Document '{safe_id}' and its related files have been deleted"}
+

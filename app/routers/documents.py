@@ -135,6 +135,19 @@ async def upload_document(
     )
 
 
+@router.delete(
+    "/{document_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Delete a document",
+    description="Deletes the specified document and its associated sidecar files from the server.",
+)
+async def delete_document_route(
+    document_id: str,
+    document_service: DocumentService = Depends(get_document_service),
+) -> dict:
+    return await document_service.delete_document(document_id)
+
+
 @router.post(
     "/{document_id}/extract",
     response_model=ExtractionMetadataResponse,

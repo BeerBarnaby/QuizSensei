@@ -204,9 +204,39 @@ main.stage {
 .doc-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .doc-meta { font-size: 11px; color: var(--text-dim); }
 
+.doc-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto; /* Push actions to the right */
+}
+
+.doc-delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: var(--transition);
+    opacity: 0; /* Hidden by default, shown on hover */
+}
+
+.doc-item:hover .doc-delete-btn {
+    opacity: 1;
+}
+
+.doc-delete-btn:hover {
+    background: #fee2e2;
+    color: var(--danger);
+}
+
 .doc-check {
-    position: absolute;
-    right: 12px;
     width: 18px;
     height: 18px;
     border-radius: 5px;
