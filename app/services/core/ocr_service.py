@@ -14,7 +14,7 @@ import httpx
 import asyncio
 
 from app.core.config import get_settings
-from app.core.llm import call_openrouter_json, call_openrouter_text
+from app.core.llm import call_openrouter_json, call_openrouter_text, get_llm_api_key
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -74,17 +74,15 @@ class OCRService:
         }
 
         try:
-            # We use httpx directly here as call_openrouter_text might not support multi-modal payload yet
-            # or we can adapt call_openrouter_text later.
-            keys = settings.openrouter_keys_list
-            if not keys:
+            api_key = get_llm_api_key()
+            if api_key == "dummy":
                 raise ValueError("No API keys configured.")
             
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(
                     f"{settings.OPENROUTER_BASE_URL}/chat/completions",
                     headers={
-                        "Authorization": f"Bearer {keys[0]}",
+                        "Authorization": f"Bearer {api_key}",
                         "HTTP-Referer": "https://quizsensei.ai", # Required by some models
                         "X-Title": "QuizSensei"
                     },
