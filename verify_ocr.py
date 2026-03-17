@@ -49,13 +49,18 @@ async def test_ocr_logic():
 
             # 2. Test Vision OCR (Mock HTTPX)
             log("Test 2: Vision OCR Logic...")
-            with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-                mock_response = AsyncMock()
+            with patch("app.services.ocr_service.httpx.AsyncClient") as mock_client_class:
+                mock_client = mock_client_class.return_value
+                # Mock the async context manager
+                mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+                mock_client.__aexit__ = AsyncMock(return_value=None)
+                
+                mock_response = MagicMock() # json() can be a regular mock if not awaited, but in httpx it's a method
                 mock_response.json.return_value = {
                     "choices": [{"message": {"content": "Vision extracted text"}}]
                 }
                 mock_response.raise_for_status = MagicMock()
-                mock_post.return_value = mock_response
+                mock_client.post = AsyncMock(return_value=mock_response)
                 
                 log("Calling extract_from_image_vision...")
                 result = await ocr.extract_from_image_vision(b"fake-image-bytes")
