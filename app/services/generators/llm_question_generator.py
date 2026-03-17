@@ -6,7 +6,6 @@ import random
 import uuid
 import logging
 from typing import List, Dict, Any
-import httpx
 
 from app.core.config import Settings
 from app.services.generators.base import BaseQuestionGenerator

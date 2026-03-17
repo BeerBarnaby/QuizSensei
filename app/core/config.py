@@ -22,18 +22,17 @@ class Settings(BaseSettings):
     # Maximum file size in bytes (default: 20 MB)
     MAX_FILE_SIZE_BYTES: int = 20 * 1024 * 1024
     # Allowed MIME types (enforced alongside extension check)
-    ALLOWED_EXTENSIONS: Set[str] = {".pdf", ".txt", ".doc", ".docx"}
+    ALLOWED_EXTENSIONS: Set[str] = {".pdf", ".txt", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".webp"}
+
+    # ── OCR & Universal Support ───────────────────────────────────────────
+    OCR_MIN_TEXT_LENGTH: int = 200  # Threshold to trigger OCR if digital text is too short
+    TESSERACT_CMD: str = "tesseract"  # System command or path to tesseract
+    VISION_LLM_MODEL: str = "google/gemini-flash-1.5:free"  # Preferred model for Vision OCR
 
     # ── OpenRouter LLM ───────────────────────────────────────────────────
-    OPENROUTER_URL: str = "https://openrouter.ai/api/v1/completions"
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     OPENROUTER_MODEL: str
-    OPENROUTER_MODEL_OCR: str = "google/gemini-flash-1.5:free" # Default fallback
     OPENROUTER_API_KEYS: str
-
-    # ── OCR Settings ─────────────────────────────────────────────────────
-    OCR_DPI: int = 300                  # DPI for pdf2image conversion
-    OCR_MIN_CHARS_THRESHOLD: int = 50   # Min chars to consider page as "has text"
-    OCR_MAX_IMAGE_SIZE: int = 1600      # Max pixel dimension for OCR images
     
     # ── Database (PostgreSQL) ────────────────────────────────────────────
     POSTGRES_USER: str = "quizsensei"

@@ -501,7 +501,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | `API_PORT` | `8000` | Port ที่เปิดให้ host |
 | `UPLOAD_DIR` | `uploads` | โฟลเดอร์เก็บไฟล์ |
 | `MAX_FILE_SIZE_BYTES` | `20971520` | ขนาดไฟล์สูงสุด (20MB) |
-| `OPENROUTER_URL` | `https://openrouter.ai/api/v1/completions` | OpenRouter endpoint |
+| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | OpenRouter endpoint |
 | `OPENROUTER_MODEL` | `nvidia/nemotron-3-super-120b-a12b:free` | โมเดล LLM หลัก |
 | `OPENROUTER_MODEL_OCR` | `google/gemini-flash-1.5:free` | โมเดลสำหรับ Vision OCR |
 | `OPENROUTER_API_KEYS` | — | API keys (comma-separated, round-robin) |

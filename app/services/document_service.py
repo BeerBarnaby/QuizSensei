@@ -12,8 +12,9 @@ from fastapi import HTTPException, status
 
 from app.core.config import Settings
 from app.services.extractors.txt_extractor import TxtExtractor
-from app.services.extractors.pdf_extractor import PdfExtractor
+from app.services.extractors.pdf_extractor import PDFExtractor
 from app.services.extractors.docx_extractor import DocxExtractor
+from app.services.extractors.image_extractor import ImageExtractor
 
 
 class DocumentService:
@@ -25,8 +26,12 @@ class DocumentService:
         # Strategy map for extractors based on file extension
         self.extractors = {
             ".txt": TxtExtractor(),
-            ".pdf": PdfExtractor(),
+            ".pdf": PDFExtractor(),
             ".docx": DocxExtractor(),
+            ".jpg": ImageExtractor(),
+            ".jpeg": ImageExtractor(),
+            ".png": ImageExtractor(),
+            ".webp": ImageExtractor(),
         }
 
     def _get_document_path(self, document_id: str) -> Path:
@@ -39,8 +44,13 @@ class DocumentService:
     def _get_sidecar_path(self, document_id: str) -> Path:
         """Returns the path where the JSON extraction result will be stored."""
         safe_id = Path(document_id).name
-        # Store as uuid_filename.ext.json
-        return self.settings.EXTRACTED_DIR / f"{safe_id}.json"
+        sidecar_path = self.settings.EXTRACTED_DIR / f"{safe_id}.json"
+        
+        # Log path for troubleshooting 404
+        from app.core.llm import logger
+        logger.info(f"Checking sidecar path: {sidecar_path} (exists: {sidecar_path.exists()})")
+        
+        return sidecar_path
 
     async def extract_document(self, document_id: str) -> Dict[str, Any]:
         """
@@ -125,9 +135,11 @@ class DocumentService:
         """Returns the full JSON containing metadata and all extracted_text."""
         sidecar_path = self._get_sidecar_path(document_id)
         if not sidecar_path.exists():
+            from app.core.llm import logger
+            logger.error(f"Sidecar file NOT FOUND: {sidecar_path}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
-                detail="Extraction data not found. Please extract the document first."
+                detail=f"Extraction data not found for {document_id}. Please extract it first."
             )
 
         async with aiofiles.open(sidecar_path, "r", encoding="utf-8") as f:

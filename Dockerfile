@@ -23,6 +23,14 @@ LABEL maintainer="QuizSensei Team"
 LABEL app="quizsensei-api"
 LABEL version="0.1.0"
 
+# Install runtime system packages for OCR
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tesseract-ocr \
+    tesseract-ocr-tha \
+    poppler-utils \
+    libmagic1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Non-root user for security
 RUN useradd --no-create-home --shell /bin/false appuser
 
@@ -32,16 +40,8 @@ WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install system dependencies for OCR
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    poppler-utils \
-    tesseract-ocr \
-    tesseract-ocr-tha \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy application source
 COPY app/ ./app/
-COPY frontend/ ./frontend/
 
 # Uploads directory – will be volume-mounted in production
 RUN mkdir -p /app/uploads && chown -R appuser:appuser /app

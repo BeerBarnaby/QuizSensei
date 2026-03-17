@@ -5,7 +5,6 @@ import json
 import random
 import logging
 from typing import Dict, Any
-import httpx
 
 from app.core.config import Settings
 from app.services.analyzers.base import BaseAnalyzer
