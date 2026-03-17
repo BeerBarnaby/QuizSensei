@@ -101,6 +101,7 @@ class AuditorAgent:
             "ส่งกลับเป็น Array JSON ของผลลัพธ์การ Audit เท่านั้น"
         )
 
+        import asyncio
         from app.core.llm import call_openrouter_json
         
         full_prompt = f"{system_prompt}\n\n{user_prompt}"
@@ -108,7 +109,8 @@ class AuditorAgent:
         try:
             logger.info(f"Agent 3 กำลังออดิทข้อสอบ {len(questions)} ข้อ สำหรับระดับ {audience}")
 
-            audit_results = call_openrouter_json(
+            audit_results = await asyncio.to_thread(
+                call_openrouter_json,
                 prompt=full_prompt,
                 model=self.model,
                 temperature=0.1

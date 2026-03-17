@@ -117,6 +117,7 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
             "อย่าลืมตอบกลับด้วยรูปแบบ JSON รูปแบบข้อสอบตามที่กำหนดเท่านั้น"
         )
 
+        import asyncio
         from app.core.llm import call_openrouter_json
         
         full_prompt = f"{system_prompt}\n\n{user_prompt}"
@@ -127,7 +128,8 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
             logger.info("============== AGENT 2 PROMPT END ==============")
             logger.info(f"Agent 2 เริ่มสร้างข้อสอบ {num_q} ข้อสำหรับระดับ {audience} ความยาก {difficulty}")
 
-            questions = call_openrouter_json(
+            questions = await asyncio.to_thread(
+                call_openrouter_json,
                 prompt=full_prompt,
                 model=self.model,
                 temperature=0.7

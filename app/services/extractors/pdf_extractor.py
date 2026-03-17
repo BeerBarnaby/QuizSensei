@@ -3,17 +3,19 @@ PDF text extraction strategy.
 Uses pdf2image and vision-based OCR (via LLM) as a primary extraction method for complex layouts.
 """
 import logging
-import asyncio
-import base64
-import re
 import io
+import asyncio
 from pathlib import Path
 from pypdf import PdfReader
+from pdf2image import convert_from_path
 
 from app.core.config import get_settings
 from app.services.extractors.base import BaseExtractor
+from app.services.ocr_service import ocr_service
 
-class PdfExtractor(BaseExtractor):
+logger = logging.getLogger(__name__)
+
+class PDFExtractor(BaseExtractor):
     """Extracts text from .pdf documents using direct text extraction."""
 
     def __init__(self):
@@ -51,24 +53,26 @@ class PdfExtractor(BaseExtractor):
         raw_text = ""
         try:
             # ── TIER 1: Digital Extraction ────────────────────────────────────
-            reader = PdfReader(file_path)
-            digital_pages = []
-            for page in reader.pages:
-                text = page.extract_text() or ""
-                digital_pages.append(text)
-            
-            raw_text = "\n\n".join(digital_pages).strip()
+            def _read_digital():
+                reader = PdfReader(file_path)
+                digital_pages = []
+                for page in reader.pages:
+                    text = page.extract_text() or ""
+                    digital_pages.append(text)
+                return "\n\n".join(digital_pages).strip()
+
+            raw_text = await asyncio.to_thread(_read_digital)
             
             # Check if digital extraction is sufficient
-            if len(raw_text) >= settings.OCR_MIN_TEXT_LENGTH:
+            if len(raw_text) >= self.settings.OCR_MIN_TEXT_LENGTH:
                 logger.info(f"Digital extraction successful for {file_path} ({len(raw_text)} chars)")
                 return await ocr_service.refine_content(raw_text)
             
             logger.warning(f"Digital text too short ({len(raw_text)} chars). Triggering OCR for {file_path}")
 
             # ── TIER 2 & 3: OCR on Images ─────────────────────────────────────
-            # Convert PDF pages to images
-            images = convert_from_path(file_path)
+            # Convert PDF pages to images (synchronous, run in thread)
+            images = await asyncio.to_thread(convert_from_path, file_path)
             ocr_pages = []
             
             for i, image in enumerate(images):

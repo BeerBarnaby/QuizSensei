@@ -84,11 +84,13 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
         max_chars = 30_000
         truncated = text[:max_chars]
 
+        import asyncio
         from app.core.llm import call_openrouter_json
         
         full_prompt = f"{self._get_system_prompt()}\n\nข้อความสำหรับวิเคราะห์:\n{truncated}"
         
-        parsed = call_openrouter_json(
+        parsed = await asyncio.to_thread(
+            call_openrouter_json,
             prompt=full_prompt,
             model=self.model,
             temperature=0.1

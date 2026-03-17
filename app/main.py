@@ -58,13 +58,8 @@ app.add_middleware(
 app.include_router(documents.router, prefix="/api/v1")
 app.include_router(exams.router, prefix="/api/v1")
 
-# ── Serve Frontend ─────────────────────────────────────────────────────────
-_FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
-app.mount("/frontend", StaticFiles(directory=_FRONTEND_DIR), name="frontend")
 
-@app.get("/", include_in_schema=False)
-async def serve_root():
-    return FileResponse(_FRONTEND_DIR / "index.html")
+# ── Health check ──────────────────────────────────────────────────────────
 
 
 # ── Health check ──────────────────────────────────────────────────────────

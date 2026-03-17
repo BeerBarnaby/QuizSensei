@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Optional, List
 import io
 import httpx
+import asyncio
 
 from app.core.config import get_settings
 from app.core.llm import call_openrouter_json, call_openrouter_text
@@ -26,10 +27,13 @@ class OCRService:
     async def extract_from_image(image_bytes: bytes, lang: str = "tha+eng") -> str:
         """Perform local OCR using Tesseract on an image."""
         try:
-            image = Image.open(io.BytesIO(image_bytes))
-            # Optimization: Convert to grayscale for better OCR
-            image = image.convert('L')
-            text = pytesseract.image_to_string(image, lang=lang)
+            def _ocr():
+                image = Image.open(io.BytesIO(image_bytes))
+                # Optimization: Convert to grayscale for better OCR
+                image = image.convert('L')
+                return pytesseract.image_to_string(image, lang=lang)
+            
+            text = await asyncio.to_thread(_ocr)
             return text.strip()
         except Exception as e:
             logger.error(f"Tesseract OCR failed: {e}")
@@ -107,8 +111,10 @@ class OCRService:
         )
 
         try:
-            refined = await call_openrouter_text(prompt, system_prompt="You are an expert document processor.")
-            return refined.strip()
+            # call_openrouter_text is synchronous, so we run it in a thread
+            loop = asyncio.get_running_loop()
+            refined = await loop.run_in_executor(None, lambda: call_openrouter_text(prompt))
+            return refined.strip() if refined else raw_text
         except Exception as e:
             logger.warning(f"Content refinement failed: {e}. Returning raw text.")
             return raw_text
