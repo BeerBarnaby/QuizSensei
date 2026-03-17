@@ -102,12 +102,15 @@ class OCRService:
             return raw_text
 
         prompt = (
-            "You are a professional editor. Below is raw text extracted from a document via OCR. "
-            "It might contain artifacts, misspellings, or broken formatting. "
-            "Please clean it up, fix Thai/English spelling, and format it into clean Markdown. "
-            "Preserve all factual information. Keep the language same as source. "
-            "Output ONLY the cleaned Markdown content.\n\n"
-            f"--- RAW TEXT ---\n{raw_text}\n--- END RAW TEXT ---"
+            "คุณคือบรรณาธิการเอกสารมืออาชีพ (Expert Document Editor)\n\n"
+            "เนื้อหาด้านล่างนี้ได้มาจากการทำ OCR ซึ่งอาจมีตัวอักษรผิดเพี้ยน, สระจม, หรือจัดโครงสร้างผิดพลาด\n\n"
+            "ภารกิจของคุณ:\n"
+            "1. ปรับปรุงไวยากรณ์ไทยให้สละสลวย อ่านง่าย และลื่นไหล (Natural Thai Flow)\n"
+            "2. แก้คำสะกดผิดที่เกิดจากความผิดพลาดของ OCR ทั้งภาษาไทยและภาษาอังกฤษ\n"
+            "3. รักษาโครงสร้างเดิม (หัวข้อ, ลิสต์, ลำดับ) โดยใช้ Markdown\n"
+            "4. ห้ามเปลี่ยนแปลงเนื้อหาเชิงข้อเท็จจริงหรือตัวเลขใดๆ ทั้งสิ้น\n"
+            "5. ห้ามแสดงความคิดเห็นเพิ่มเติม ให้ส่งกลับเฉพาะเนื้อหาที่ปรับปรุงแล้วเท่านั้น\n\n"
+            f"--- RAW OCR TEXT ---\n{raw_text}\n--- END ---"
         )
 
         try:
