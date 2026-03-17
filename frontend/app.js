@@ -396,32 +396,32 @@ function renderAnalysis(data) {
   const kw = (data.keywords_found || []).map(k => `<span class="badge-premium badge-blue">${escHtml(k)}</span>`).join(' ');
 
   parent.innerHTML = `
-    <div class="heading-outfit" style="margin-bottom:20px; font-size:18px;">Agent 1 – ผลวิเคราะห์เนื้อหา</div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;">
-      <div class="glass-card" style="margin-bottom:0; padding:16px; border-left:4px solid var(--primary);">
-        <div style="font-size:11px; color:var(--text-dim); text-transform:uppercase;">หัวข้อหลัก</div>
-        <div style="font-weight:700; font-size:15px; color:var(--primary); margin-top:4px;">${escHtml(data.topic?.replace(/_/g, ' ') || '-')}</div>
+    <div class="heading-outfit" style="margin-bottom:20px; font-size:16px; color:var(--text-secondary);">Agent 1 – ผลวิเคราะห์เนื้อหา</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+      <div style="padding:16px; background:var(--bg-input); border-radius:var(--radius-xs); border-left:3px solid var(--primary);">
+        <div style="font-size:11px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.05em;">หัวข้อหลัก</div>
+        <div style="font-weight:600; font-size:14px; color:var(--primary); margin-top:4px;">${escHtml(data.topic?.replace(/_/g, ' ') || '-')}</div>
       </div>
-      <div class="glass-card" style="margin-bottom:0; padding:16px;">
-        <div style="font-size:11px; color:var(--text-dim); text-transform:uppercase;">หัวข้อย่อย</div>
-        <div style="font-weight:600; font-size:14px; margin-top:4px;">${escHtml(data.subtopic?.replace(/_/g, ' ') || '-')}</div>
+      <div style="padding:16px; background:var(--bg-input); border-radius:var(--radius-xs);">
+        <div style="font-size:11px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.05em;">หัวข้อย่อย</div>
+        <div style="font-weight:500; font-size:14px; margin-top:4px;">${escHtml(data.subtopic?.replace(/_/g, ' ') || '-')}</div>
       </div>
     </div>
 
-    <div class="glass-card" style="border-left:4px solid var(--purple); margin-bottom:16px;">
+    <div style="padding:16px; background:var(--purple-bg); border-radius:var(--radius-xs); border-left:3px solid var(--purple); margin-bottom:16px;">
       <div style="display:flex; justify-content:space-between; align-items:start;">
         <div>
-          <div style="font-size:11px; color:var(--text-dim); text-transform:uppercase;">กลุ่มเป้าหมายที่เหมาะสม</div>
-          <div style="font-size:22px; font-weight:700; color:var(--purple); margin-top:4px;">${escHtml(data.suggested_learner_level || '-')}</div>
+          <div style="font-size:11px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.05em;">กลุ่มเป้าหมายที่เหมาะสม</div>
+          <div style="font-size:20px; font-weight:600; color:var(--purple); margin-top:4px;">${escHtml(data.suggested_learner_level || '-')}</div>
         </div>
-        <span class="badge-premium badge-purple">Agent 1: แนะนำ</span>
+        <span class="badge-premium badge-purple">แนะนำ</span>
       </div>
-      <div style="font-size:13px; color:var(--text-muted); margin-top:10px; line-height:1.6;">${escHtml(data.learner_level_reason || '')}</div>
+      <div style="font-size:13px; color:var(--text-secondary); margin-top:8px; line-height:1.6;">${escHtml(data.learner_level_reason || '')}</div>
     </div>
 
     <div id="sufficiencyBanner"></div>
 
-    ${kw ? `<div style="margin-top:16px;"><div style="font-size:11px; color:var(--text-dim); text-transform:uppercase; margin-bottom:8px;">คำสำคัญที่พบ</div><div style="display:flex; flex-wrap:wrap; gap:6px;">${kw}</div></div>` : ''}
+    ${kw ? `<div style="margin-top:14px;"><div style="font-size:11px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">คำสำคัญที่พบ</div><div style="display:flex; flex-wrap:wrap; gap:6px;">${kw}</div></div>` : ''}
   `;
 
   // Sync audience dropdown
@@ -448,24 +448,24 @@ function updateSufficiencyBanner() {
 
   if (sufficient) {
     banner.innerHTML = `
-      <div class="diag-box" style="border-color:var(--success); background:#f0fdf4;">
+      <div class="diag-box" style="border-left-color:var(--success); background:var(--success-bg);">
         <div class="diag-title" style="color:var(--success);">✅ เนื้อหาเพียงพอสำหรับสร้างข้อสอบ</div>
         <div class="diag-text">${escHtml(state.analysisResult.sufficiency_reason || '')}</div>
       </div>`;
     if (goBtn) goBtn.disabled = false;
   } else if (extraCount > 0) {
     banner.innerHTML = `
-      <div class="diag-box" style="border-color:var(--warning); background:#fffbeb;">
+      <div class="diag-box" style="border-left-color:var(--warning); background:var(--warning-bg);">
         <div class="diag-title" style="color:var(--warning);">⚠️ เนื้อหาในเอกสารหลักยังไม่ครบ แต่ระบบจะรวม ${extraCount} เอกสารสำรองด้วย</div>
         <div class="diag-text">คุณสามารถดำเนินการต่อได้ ข้อสอบจะอิงจากเนื้อหาทั้งหมด ${1 + extraCount} ไฟล์</div>
       </div>`;
     if (goBtn) goBtn.disabled = false;
   } else {
     banner.innerHTML = `
-      <div class="diag-box" style="border-color:var(--danger); background:#fff1f2;">
+      <div class="diag-box" style="border-left-color:var(--danger); background:var(--danger-bg);">
         <div class="diag-title" style="color:var(--danger);">❌ เนื้อหาไม่เพียงพอ – ต้องการเอกสารเพิ่มเติม</div>
         <div class="diag-text">${escHtml(state.analysisResult.sufficiency_reason || '')}</div>
-        <div style="margin-top:12px; padding:10px; background:#fee2e2; border-radius:8px; font-size:13px;">
+        <div style="margin-top:10px; padding:10px; background:rgba(0,0,0,0.04); border-radius:var(--radius-xs); font-size:13px;">
           <strong>👈 วิธีแก้ไข:</strong> คลิกเลือก <strong>เอกสารอื่นๆ ในรายการซ้ายมือ</strong> เพื่อเพิ่มเป็น "เอกสารสำรอง" แล้วระบบจะรวมเนื้อหาให้อัตโนมัติ
         </div>
       </div>`;
@@ -481,7 +481,7 @@ async function handleGenerate() {
 
   el.btnGenerate.disabled = true;
   el.btnGenerate.innerHTML = `<span>⏳ กำลังสร้าง...</span>`;
-  el.quizArea.innerHTML = `<div class="glass-card" style="text-align:center; color:var(--text-muted); padding:40px;">Agent 2 กำลังออกแบบข้อสอบ... Agent 3 กำลังตรวจสอบคุณภาพ...</div>`;
+  el.quizArea.innerHTML = `<div class="glass-card" style="text-align:center; color:var(--text-tertiary); padding:40px;">Agent 2 กำลังออกแบบข้อสอบ... Agent 3 กำลังตรวจสอบคุณภาพ...</div>`;
 
   const body = {
     number_of_questions: parseInt($('qCount').value) || 3,
@@ -495,7 +495,7 @@ async function handleGenerate() {
     state.questions = res.questions || [];
 
     if (!state.questions.length) {
-      el.quizArea.innerHTML = `<div class="diag-box" style="border-color:var(--warning);">
+      el.quizArea.innerHTML = `<div class="diag-box" style="border-left-color:var(--warning); background:var(--warning-bg);">
         <div class="diag-title" style="color:var(--warning);">ข้อสอบทั้งหมดถูก Agent 3 ปฏิเสธ (${res.total_rejected || 0} ข้อ)</div>
         <div class="diag-text">ลองเพิ่มจำนวนข้อสอบ เปลี่ยนระดับความยาก หรือเพิ่มเอกสารสำรองเพิ่มเติมครับ</div>
       </div>`;
@@ -503,48 +503,48 @@ async function handleGenerate() {
       renderQuiz(res);
     }
   } catch (err) {
-    el.quizArea.innerHTML = `<div class="diag-box" style="border-color:var(--danger);">
+    el.quizArea.innerHTML = `<div class="diag-box" style="border-left-color:var(--danger); background:var(--danger-bg);">
       <div class="diag-title" style="color:var(--danger);">❌ ไม่สามารถสร้างข้อสอบได้</div>
       <div class="diag-text">${escHtml(err.message)}</div>
     </div>`;
   } finally {
     el.btnGenerate.disabled = false;
-    el.btnGenerate.innerHTML = `<span>🚀 สร้างข้อสอบ (Agent 2 & 3)</span>`;
+    el.btnGenerate.innerHTML = `<span>🚀 สร้างข้อสอบ</span>`;
   }
 }
 
 function renderQuiz(res) {
   const total = state.questions.length;
   const rejectedNote = res.total_rejected > 0
-    ? `<div style="font-size:12px; color:var(--text-dim); margin-bottom:16px;">Agent 3 ผ่าน ${total} ข้อ, ปฏิเสธ ${res.total_rejected} ข้อ${state.extraDocIds.length ? ` (รวมจาก ${1 + state.extraDocIds.length} เอกสาร)` : ''}</div>`
+    ? `<div style="font-size:12px; color:var(--text-tertiary); margin-bottom:12px;">Agent 3 ผ่าน ${total} ข้อ, ปฏิเสธ ${res.total_rejected} ข้อ${state.extraDocIds.length ? ` (รวมจาก ${1 + state.extraDocIds.length} เอกสาร)` : ''}</div>`
     : '';
 
   el.quizArea.innerHTML = rejectedNote + state.questions.map((q, i) => `
     <div class="q-card" id="qcard-${q.question_id}">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <strong style="color:var(--primary);">ข้อที่ ${i + 1}</strong>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <span style="font-size:14px; font-weight:600; color:var(--primary);">ข้อที่ ${i + 1}</span>
         <div style="display:flex; gap:6px;">
           <span class="badge-premium badge-blue">${escHtml(q.difficulty)}</span>
-          ${q.bloom_level ? `<span class="badge-premium badge-purple">🎓 ${escHtml(q.bloom_level)}</span>` : ''}
+          ${q.bloom_level ? `<span class="badge-premium badge-purple">${escHtml(q.bloom_level)}</span>` : ''}
         </div>
       </div>
-      <p style="font-size:16px; font-weight:600; line-height:1.6; margin-bottom:20px;">${escHtml(q.stem)}</p>
+      <p style="font-size:15px; font-weight:500; line-height:1.7; margin-bottom:16px; color:var(--text-primary);">${escHtml(q.stem)}</p>
       <div class="choice-grid">
         ${q.choices.map(c => `
           <button class="choice-item" data-qid="${q.question_id}" data-key="${c.key}">
-            <div style="font-weight:700; opacity:0.5; min-width:18px;">${c.key}</div>
+            <div style="font-weight:600; color:var(--text-tertiary); min-width:18px;">${c.key}</div>
             <div>${escHtml(c.text)}</div>
           </button>`).join('')}
       </div>
       <div id="diag-${q.question_id}" class="hidden"></div>
       ${q.design_reasoning ? `
-        <details style="margin-top:14px;">
-          <summary style="font-size:12px; color:var(--text-dim); cursor:pointer; user-select:none;">💡 ทำไมถึงมีคำถามนี้? (Agent 2)</summary>
-          <div style="margin-top:8px; font-size:13px; color:var(--text-muted); padding:12px; background:#f8fafc; border-radius:8px; line-height:1.6;">${escHtml(q.design_reasoning)}</div>
+        <details style="margin-top:12px;">
+          <summary style="font-size:12px; color:var(--text-tertiary); cursor:pointer; user-select:none;">💡 ทำไมถึงมีคำถามนี้?</summary>
+          <div style="margin-top:8px; font-size:13px; color:var(--text-secondary); padding:12px; background:var(--bg-input); border-radius:var(--radius-xs); line-height:1.6;">${escHtml(q.design_reasoning)}</div>
         </details>` : ''}
     </div>
   `).join('') + `
-    <button id="btnSubmitQuiz" class="btn-premium btn-primary" style="width:100%; height:52px; font-size:15px; margin-top:8px;">
+    <button id="btnSubmitQuiz" class="btn-premium btn-primary" style="width:100%; height:44px; font-size:14px; margin-top:8px;">
       📝 ส่งคำตอบ
     </button>`;
 
@@ -633,12 +633,12 @@ function renderDiagnostic(q, data) {
   });
 
   box.innerHTML = `
-    <div class="diag-box" style="border-color:${data.is_correct ? 'var(--success)' : 'var(--danger)'}; background:${data.is_correct ? '#f0fdf4' : '#fff1f2'};">
-      <div class="diag-title" style="color:${data.is_correct ? 'var(--success)' : 'var(--danger)'}; font-size: 14px; display:flex; align-items:center; gap:8px;">
-        ${data.is_correct ? '✨ ถูกต้อง! (Agent 4 ผ่าน)' : '❌ ยังไม่ถูกต้อง (Agent 4 แนะนำ)'}
+    <div class="diag-box" style="border-left-color:${data.is_correct ? 'var(--success)' : 'var(--danger)'}; background:${data.is_correct ? 'var(--success-bg)' : 'var(--danger-bg)'};">
+      <div class="diag-title" style="color:${data.is_correct ? 'var(--success)' : 'var(--danger)'}; display:flex; align-items:center; gap:8px;">
+        ${data.is_correct ? '✅ ถูกต้อง!' : '❌ ยังไม่ถูกต้อง'}
       </div>
-      <div class="diag-text" style="margin-top:8px;">${escHtml(data.diagnostic_message || '').replace(/\n/g, '<br>')}</div>
-      ${data.suggested_review_topic ? `<div style="margin-top:12px; padding-top:8px; border-top:1px solid rgba(0,0,0,0.05); font-size:12px; color:var(--primary);">💡 หัวข้อที่ควรทบทวน: <strong>${escHtml(data.suggested_review_topic)}</strong></div>` : ''}
+      <div class="diag-text" style="margin-top:6px;">${escHtml(data.diagnostic_message || '').replace(/\n/g, '<br>')}</div>
+      ${data.suggested_review_topic ? `<div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(0,0,0,0.06); font-size:12px; color:var(--primary);">💡 หัวข้อที่ควรทบทวน: <strong>${escHtml(data.suggested_review_topic)}</strong></div>` : ''}
     </div>`;
   box.classList.remove('hidden');
 }
