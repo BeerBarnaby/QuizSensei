@@ -49,8 +49,8 @@ class Settings(BaseSettings):
     # ── Cache / Workers (Redis) ──────────────────────────────────────────
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # Comma-separated list of API keys for round-robin rotation
-
+    # Comma-separated list of API keys for round-robin/random rotation
+    # This helps stay within rate limits for free-tier endpoints.
     @property
     def openrouter_keys_list(self) -> List[str]:
         """Return the parsed list of non-empty OpenRouter API keys."""

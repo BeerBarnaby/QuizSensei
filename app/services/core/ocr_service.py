@@ -53,6 +53,8 @@ class OCRService:
         # Encode image to base64
         base64_image = base64.b64encode(image_bytes).decode('utf-8')
         
+        # Prepare the multi-modal payload for OpenRouter
+        # This includes both the text instructions and the base64-encoded image
         payload = {
             "model": settings.VISION_LLM_MODEL,
             "messages": [
@@ -111,7 +113,9 @@ class OCRService:
         )
 
         try:
-            # call_openrouter_text is synchronous, so we run it in a thread
+            # call_openrouter_text is a synchronous blocking call.
+            # We use asyncio.to_thread to run it in a separate thread, 
+            # preventing it from blocking the main FastAPI event loop.
             loop = asyncio.get_running_loop()
             refined = await loop.run_in_executor(None, lambda: call_openrouter_text(prompt))
             return refined.strip() if refined else raw_text

@@ -10,8 +10,8 @@ from sqlalchemy import func
 
 from app.db.session import get_db_session
 from app.models.database_models import QuestionRecord, AnswerAttempt
-from app.schemas.exam import AnswerSubmission, SubmissionResult, QuestionAnalytics
-from app.services.agents.grader_agent import GraderAgent
+from app.schemas.student.exam import AnswerSubmission, SubmissionResult, QuestionAnalytics
+from app.services.core.agents.grader_agent import GraderAgent
 
 router = APIRouter(prefix="/exams", tags=["Exams & Analytics"])
 

@@ -26,13 +26,19 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
         self.model = settings.OPENROUTER_MODEL
 
     def _map_difficulty_to_blooms(self, difficulty: str) -> str:
-        """แปลงความยากที่รับมาจาก UI เป็นทักษะและคำสั่งย่อยตามทฤษฎี Bloom"""
+        """
+        Maps the UI difficulty (Easy/Medium/Hard) to specific Cognitive Levels in Bloom's Taxonomy.
+        This forces the LLM to design stems that test different levels of thinking.
+        """
         diff_lower = (difficulty or "ปานกลาง").lower()
         if diff_lower == "ง่าย":
+            # Level 1-2: Memorization and Basic understanding
             return "การจำ/ความเข้าใจ (Remember / Understand): คำถามวัดความจำนิยาม กฎพื้นฐาน หรือการอธิบายความหมายตรงๆ"
         elif diff_lower == "ยาก":
+            # Level 4-6: Higher order thinking
             return "การวิเคราะห์/ประเมินค่า/สร้างสรรค์ (Analyze / Evaluate / Create): คำถามวัดการตัดสินใจเลือกทางเลือกที่ดีที่สุด การจัดลำดับความสำคัญ หรือการออกแบบแผนการเงิน ภายใต้ข้อจำกัดหลายอย่าง"
         else: # ปานกลาง
+            # Level 3-4: Application and Analysis
             return "การประยุกต์ใช้/วิเคราะห์ (Apply / Analyze): คำถามวัดการนำไปใช้ในสถานการณ์จำลอง การคำนวณ การเปรียบเทียบ หรือหาความสัมพันธ์ของตัวแปร"
 
     def _get_system_prompt(self, topic: str, subtopic: str, difficulty: str, target_audience: str, num_q: int) -> str:

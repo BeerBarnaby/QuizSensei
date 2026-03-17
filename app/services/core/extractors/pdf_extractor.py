@@ -71,22 +71,22 @@ class PDFExtractor(BaseExtractor):
             logger.warning(f"Digital text too short ({len(raw_text)} chars). Triggering OCR for {file_path}")
 
             # ── TIER 2 & 3: OCR on Images ─────────────────────────────────────
-            # Convert PDF pages to images (synchronous, run in thread)
+            # If digital extraction failed or was too short, we fall back to OCR.
+            # Step A: Convert PDF pages to high-quality images.
             images = await asyncio.to_thread(convert_from_path, file_path)
             ocr_pages = []
             
             for i, image in enumerate(images):
-                # Convert PIL image to bytes
                 img_byte_arr = io.BytesIO()
                 image.save(img_byte_arr, format='JPEG')
                 image_bytes = img_byte_arr.getvalue()
                 
                 logger.info(f"Processing OCR for page {i+1} of {file_path}")
                 
-                # Try Vision LLM first
+                # Step B: Tier 2 - Try Vision LLM (Preferred for complex layouts/Thai)
                 page_text = await ocr_service.extract_from_image_vision(image_bytes)
                 
-                # Fallback to Tesseract
+                # Step C: Tier 3 - Fallback to Tesseract (Deterministic/Local)
                 if not page_text:
                     logger.warning(f"Vision OCR failed for page {i+1}, using Tesseract")
                     page_text = await ocr_service.extract_from_image(image_bytes)
@@ -96,6 +96,7 @@ class PDFExtractor(BaseExtractor):
 
             ocr_full_text = "\n\n".join(ocr_pages).strip()
             
+            # Step D: Final refinement to fix OCR noise
             if ocr_full_text:
                 return await ocr_service.refine_content(ocr_full_text)
             

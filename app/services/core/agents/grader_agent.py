@@ -35,7 +35,10 @@ class GraderAgent:
                 suggested_review_topic=None,
             )
 
-        # ── Wrong answer: extract diagnostic info from distractor_map ─────
+        # ── Wrong answer: Extract diagnostic info from distractor_map ─────
+        # Instead of calling LLM, we use the pre-calculated 'distractor_map'
+        # generated during the creation phase. This identifies the specific 
+        # misconception linked to this specific wrong choice.
         distractor_map: Dict[str, Any] = question_payload.get("distractor_map", {})
         distractor_info = distractor_map.get(selected_key_upper, {})
 
@@ -52,6 +55,7 @@ class GraderAgent:
         if why_plausible:
             basic_rationale += f"\n(เหตุผลที่มักสับสน: {why_plausible})"
 
+        # Construct the detailed diagnostic message for the learner
         diagnostic_message = self._build_diagnostic_message(
             correct_answer=correct_answer,
             correct_rationale=question_payload.get("rationale_for_correct_answer", ""),

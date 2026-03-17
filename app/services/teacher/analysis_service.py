@@ -11,7 +11,7 @@ import aiofiles
 from fastapi import HTTPException, status
 
 from app.core.config import Settings
-from app.services.analyzers.llm_financial_literacy_analyzer import LLMFinancialLiteracyAnalyzer
+from app.services.core.analyzers.llm_financial_literacy_analyzer import LLMFinancialLiteracyAnalyzer
 
 class AnalysisService:
     """Provides business logic for running analysis on extracted documents."""

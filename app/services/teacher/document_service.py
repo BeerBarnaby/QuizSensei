@@ -11,10 +11,10 @@ import aiofiles
 from fastapi import HTTPException, status
 
 from app.core.config import Settings
-from app.services.extractors.txt_extractor import TxtExtractor
-from app.services.extractors.pdf_extractor import PDFExtractor
-from app.services.extractors.docx_extractor import DocxExtractor
-from app.services.extractors.image_extractor import ImageExtractor
+from app.services.core.extractors.txt_extractor import TxtExtractor
+from app.services.core.extractors.pdf_extractor import PDFExtractor
+from app.services.core.extractors.docx_extractor import DocxExtractor
+from app.services.core.extractors.image_extractor import ImageExtractor
 
 
 class DocumentService:

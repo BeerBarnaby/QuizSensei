@@ -19,10 +19,13 @@ def get_llm_api_key() -> str:
     return random.choice(keys) if keys else "dummy"
 
 def clean_json_string(raw: str) -> str:
-    """Removes markdown code fences and extraneous text from LLM responses."""
+    """
+    Removes markdown code fences and extraneous text from LLM responses.
+    Ensures the string passed to json.loads is a clean JSON structure.
+    """
     if not raw:
         return ""
-    # Remove markdown code fences if present
+    # Extract content inside ```json ... ``` or just ``` ... ```
     if "```json" in raw:
         raw = raw.split("```json")[1].split("```")[0].strip()
     elif "```" in raw:
@@ -110,7 +113,9 @@ def call_openrouter_json(
         return json.loads(cleaned)
     except Exception as e:
         logger.error(f"JSON Parse Error: {e}")
-        # Scavenging fallback
+        # SCAVENGING FALLBACK:
+        # If the LLM returned text before/after the JSON, we try to locate
+        # the JSON boundaries manually to salvage the data.
         try:
             start_idx = max(cleaned.find('['), cleaned.find('{'))
             end_idx = max(cleaned.rfind(']'), cleaned.rfind('}'))

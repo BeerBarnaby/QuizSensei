@@ -20,6 +20,8 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
     ผลลัพธ์ทั้งหมดอธิบายเป็นภาษาไทย
     """
 
+    # Main Financial Literacy Taxonomy (Drafted for NECTEC/Bank of Thailand standards)
+    # Maps top-level topics to specific sub-concepts used for generation and reporting.
     FL_TAXONOMY = {
         "budgeting_and_spending": ["needs_vs_wants", "fixed_vs_variable_expenses", "monthly_budgeting"],
         "saving_and_emergency_fund": ["savings_goals", "emergency_fund", "delayed_gratification"],

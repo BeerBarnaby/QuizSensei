@@ -13,9 +13,9 @@ from fastapi import HTTPException, status as fast_status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
-from app.schemas.question import QuestionGenerationRequest
-from app.services.generators.llm_question_generator import LLMQuestionGenerator
-from app.services.agents.auditor_agent import AuditorAgent
+from app.schemas.teacher.question import QuestionGenerationRequest
+from app.services.core.generators.llm_question_generator import LLMQuestionGenerator
+from app.services.core.agents.auditor_agent import AuditorAgent
 from app.models.database_models import QuestionRecord
 
 logger = logging.getLogger(__name__)
@@ -107,11 +107,14 @@ class QuestionGenerationService:
         max_attempts = 3
         attempts = 0
 
+        # ── REGENERATION LOOP ───────────────────────────────────────────
+        # This loop ensures we meet the user's requested 'target_amount' of 
+        # questions that have been officially APPROVED by Agent 3 (Auditor).
         while len(approved_questions) < target_amount and attempts < max_attempts:
             needed = target_amount - len(approved_questions)
             logger.info(f"Loop {attempts+1}/{max_attempts}: Generating {needed} questions...")
             
-            # Temporary request object for the loop
+            # Request only the missing delta from Agent 2
             loop_req = request.model_copy(update={"number_of_questions": needed})
             
             try:
@@ -121,10 +124,11 @@ class QuestionGenerationService:
                 break
 
             try:
+                # Agent 3 (Auditor) verifies if the drafts meet quality standards
                 audited = await self.auditor.audit(raw_drafts, audience, difficulty)
             except Exception as e:
                 logger.error(f"Audit fail: {e}")
-                # Fallback to appending them as pending to not infinitely loop crash
+                # If audit fails, we keep the drafts but they remain 'pending'
                 pending_questions.extend(raw_drafts)
                 break
 
