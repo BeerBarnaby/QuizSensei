@@ -4,7 +4,7 @@ Agent 4 (Grader) - Provides zero-cost diagnostic feedback by mapping student ans
 import logging
 from typing import Dict, Any, Optional
 
-from app.schemas.agent_outputs import GraderOutput
+from app.schemas.shared.agent_outputs import GraderOutput
 
 logger = logging.getLogger(__name__)
 

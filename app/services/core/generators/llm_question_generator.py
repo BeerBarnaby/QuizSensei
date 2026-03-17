@@ -8,8 +8,8 @@ import logging
 from typing import List, Dict, Any
 
 from app.core.config import Settings
-from app.services.generators.base import BaseQuestionGenerator
-from app.schemas.question import QuestionGenerationRequest
+from app.services.core.generators.base import BaseQuestionGenerator
+from app.schemas.teacher.question import QuestionGenerationRequest
 
 logger = logging.getLogger(__name__)
 

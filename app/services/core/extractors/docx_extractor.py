@@ -10,7 +10,7 @@ from pathlib import Path
 import docx
 
 from app.core.config import get_settings
-from app.services.extractors.base import BaseExtractor
+from app.services.core.extractors.base import BaseExtractor
 
 class DocxExtractor(BaseExtractor):
     """Extracts text from .docx documents."""

@@ -7,8 +7,8 @@ import logging
 from typing import Dict, Any
 
 from app.core.config import Settings
-from app.services.analyzers.base import BaseAnalyzer
-from app.schemas.agent_outputs import AnalyzerOutput
+from app.services.core.analyzers.base import BaseAnalyzer
+from app.schemas.shared.agent_outputs import AnalyzerOutput
 
 logger = logging.getLogger(__name__)
 
