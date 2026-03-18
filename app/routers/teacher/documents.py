@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import aiofiles
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
@@ -94,6 +94,7 @@ async def list_documents(
 )
 async def upload_document(
     file: UploadFile = File(..., description="Document file to upload."),
+    target_audience_level: str | None = Form(None, description="Target education level of the audience."),
     settings: Settings = Depends(get_settings),
 ) -> DocumentUploadResponse:
     # ── 1. Extension validation ────────────────────────────────────────────

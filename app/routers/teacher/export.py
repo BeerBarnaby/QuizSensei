@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.db.session import get_db
+from app.db.session import get_db_session
 from app.models.database_models import QuestionRecord
 from app.services.teacher.export_service import ExportService
 
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/exports", tags=["exports"])
 export_service = ExportService()
 
 @router.get("/{document_id}/moodle")
-async def export_moodle(document_id: str, db: AsyncSession = Depends(get_db)):
+async def export_moodle(document_id: str, db: AsyncSession = Depends(get_db_session)):
     """
     Exports all approved questions for a document in Moodle XML format.
     """
@@ -37,7 +37,7 @@ async def export_moodle(document_id: str, db: AsyncSession = Depends(get_db)):
     )
 
 @router.get("/{document_id}/json")
-async def export_json(document_id: str, db: AsyncSession = Depends(get_db)):
+async def export_json(document_id: str, db: AsyncSession = Depends(get_db_session)):
     """
     Exports all approved questions for a document in standard JSON format.
     """

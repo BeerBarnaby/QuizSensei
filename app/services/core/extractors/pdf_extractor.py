@@ -5,6 +5,7 @@ Uses pdf2image and vision-based OCR (via LLM) as a primary extraction method for
 import logging
 import io
 import asyncio
+import re
 from pathlib import Path
 from pypdf import PdfReader
 from pdf2image import convert_from_path

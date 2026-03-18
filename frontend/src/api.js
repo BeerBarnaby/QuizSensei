@@ -6,7 +6,7 @@ export const apiClient = {
     formData.append('file', file);
     formData.append('target_audience_level', audience);
 
-    const response = await fetch(`${API_BASE_URL}/upload`, {
+    const response = await fetch(`${API_BASE_URL}/documents/upload`, {
       method: 'POST',
       body: formData,
     });
@@ -14,12 +14,21 @@ export const apiClient = {
   },
 
   getDocuments: async () => {
-    // This endpoint remains to be confirmed if we want a list
-    // For now, we interact with specific document IDs
+    const response = await fetch(`${API_BASE_URL}/documents`);
+    return response.json();
+  },
+
+  extractDocument: async (documentId) => {
+    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/extract`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    return response.json();
   },
 
   analyzeDocument: async (documentId) => {
-    const response = await fetch(`${API_BASE_URL}/analyze/${documentId}`, {
+    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
@@ -28,7 +37,7 @@ export const apiClient = {
   },
 
   generateQuestions: async (documentId, config) => {
-    const response = await fetch(`${API_BASE_URL}/generate-questions/${documentId}`, {
+    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/generate-questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
@@ -37,7 +46,8 @@ export const apiClient = {
   },
 
   exportQuiz: async (documentId, format = 'moodle') => {
-    const response = await fetch(`${API_BASE_URL}/export/${documentId}?format=${format}`);
-    return response.json();
+    const response = await fetch(`${API_BASE_URL}/exports/${documentId}/${format}`);
+    if (!response.ok) throw new Error('Export failed');
+    return response.blob();
   }
 };

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 
-from app.schemas.question import QuestionGenerationRequest
+from app.schemas.teacher.question import QuestionGenerationRequest
 
 class BaseQuestionGenerator(ABC):
     """
