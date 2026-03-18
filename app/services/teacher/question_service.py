@@ -98,8 +98,16 @@ class QuestionGenerationService:
 
         target_amount = request.number_of_questions
         audience = request.target_audience_level
+        audience = request.target_audience_level
         difficulty = request.difficulty_filter or "ปานกลาง"
 
+        # ── Filter indicators if provided ──────────────────────────────
+        all_indicators = analysis_data.get("indicators", [])
+        if request.selected_indicators:
+            relevant_indicators = [ind for ind in all_indicators if ind.get("id") in request.selected_indicators]
+            # Override analysis_data with only selected indicators for the generator
+            analysis_data["indicators"] = relevant_indicators
+        
         approved_questions: List[Dict] = []
         rejected_questions: List[Dict] = []
         pending_questions: List[Dict] = []
@@ -171,6 +179,7 @@ class QuestionGenerationService:
                 document_id=document_id,
                 topic=q.get("topic", "unknown"),
                 subtopic=q.get("subtopic", "unknown"),
+                indicator_id=q.get("indicator_id"),
                 difficulty=q.get("difficulty", "unknown"),
                 payload=q,
             )

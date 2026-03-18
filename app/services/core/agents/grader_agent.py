@@ -89,4 +89,8 @@ class GraderAgent:
             parts.append(f"\n💡 คำอธิบาย: {basic_rationale}")
         if correct_rationale:
             parts.append(f"\n📚 หลักการที่ถูกต้อง: {correct_rationale}")
+        
+        # Add indicator context if available
+        # Note: In a real scenario, we might want to fetch the indicator text,
+        # but for now we show the ID for teacher/system clarity.
         return "\n".join(parts)

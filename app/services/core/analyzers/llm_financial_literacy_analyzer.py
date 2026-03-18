@@ -61,13 +61,21 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
 - **ตัวอย่างที่ไม่พอ**: เนื้อหาสั้นแค่หัวข้อ, มีแต่คำโปรยไม่มีนิยาม, หรือเป็นข้อความแชทที่ไม่มีความรู้
 - **ตัวอย่างที่พอ**: มีหลักการ (Principles), วิธีการ (Methods), หรือเคสตัวอย่าง (Cases)
 
-## 4. รูปแบบการตอบกลับ (Output Format)
+## 4. การระบุตัวชี้วัด (Learning Indicators)
+สกัด "ตัวชี้วัด" หรือ "จุดประสงค์การเรียนรู้" ที่ปรากฏในเนื้อหา โดยเน้นที่ความสามารถในการนำไปใช้งานจริง (Practical Skills)
+- ตัวอย่าง: "คำนวณดอกเบี้ยทบต้นได้", "จำแนกความแตกต่างระหว่างความต้องการและความจำเป็น", "เลือกประเภทประกันภัยที่เหมาะสมกับความเสี่ยง"
+
+## 5. รูปแบบการตอบกลับ (Output Format)
 กรุณาส่งกลับเป็น JSON ภายใน Markdown Code Block (```json ... ```) โดยใช้โครงสร้างนี้:
 {{
   "topic": "<slug ภาษาอังกฤษ>",
   "subtopic": "<slug ภาษาอังกฤษ>",
   "suggested_learner_level": "<ระดับภาษาไทย>",
   "learner_level_reason": "<เหตุผลประกอบระดับผู้เรียน - สรุปให้ครูเห็นภาพใน 1 ประโยค>",
+  "indicators": [
+    {"id": "IND-01", "text": "ตัวชี้วัดที่ 1", "relevance": "high/medium"},
+    {"id": "IND-02", "text": "ตัวชี้วัดที่ 2", "relevance": "high/medium"}
+  ],
   "content_sufficiency": <true/false>,
   "sufficiency_reason": "<ชี้จุดเด่นหรือจุดที่ขาดของเนื้อหาให้ชัดเจน>",
   "should_upload_more_documents": <true/false>,

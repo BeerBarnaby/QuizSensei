@@ -16,6 +16,7 @@ class DocumentUploadResponse(BaseModel):
     size_bytes: int = Field(..., description="Size of the uploaded file in bytes.")
     extension: str = Field(..., description="Lowercase file extension, e.g. '.pdf'.")
     upload_path: str = Field(..., description="Relative path where the file was saved.")
+    target_audience_level: str | None = Field(None, description="The educational level this document is targetted at.")
     uploaded_at: datetime = Field(default_factory=datetime.utcnow, description="UTC timestamp of the upload.")
 
     model_config = {"json_schema_extra": {
@@ -59,5 +60,7 @@ class ExtractionPreviewResponse(ExtractionMetadataResponse):
     """Preview response including a short snippet of the text."""
     preview_text: str | None = None
 
-
+class BatchExtractionRequest(BaseModel):
+    """Request payload for batch extraction."""
+    document_ids: list[str] = Field(..., description="List of document IDs to extract text from.")
 

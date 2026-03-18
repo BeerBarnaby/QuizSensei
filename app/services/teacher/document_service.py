@@ -58,6 +58,9 @@ class DocumentService:
         saves a JSON sidecar file containing metadata + full text.
         Returns the metadata dict (without full text) to the caller.
         """
+        from app.core.llm import logger
+        logger.info(f"--- START EXTRACTION for {document_id} ---")
+        
         doc_path = self._get_document_path(document_id)
         if not doc_path.exists():
             raise HTTPException(
@@ -107,6 +110,7 @@ class DocumentService:
             await f.write(json.dumps(result, ensure_ascii=False, indent=2))
 
         # Return metadata (exclude the raw bulk text payload)
+        logger.info(f"--- EXTRACTION COMPLETE for {document_id} ({len(extracted_text)} chars) ---")
         return self._strip_text(result)
 
     async def _save_and_return_failed_result(self, document_id: str, ext: str, message: str) -> Dict[str, Any]:

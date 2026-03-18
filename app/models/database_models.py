@@ -18,6 +18,7 @@ class QuestionRecord(Base):
     document_id = Column(String(50), nullable=False, index=True)
     topic = Column(String(100), nullable=False)
     subtopic = Column(String(100), nullable=False)
+    indicator_id = Column(String(50), nullable=True)
     difficulty = Column(String(20), nullable=False)
     
     # Store the entire complex Question Draft schema as JSON payload

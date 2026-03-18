@@ -27,6 +27,10 @@ class QuestionGenerationRequest(BaseModel):
         default_factory=list,
         description="Extra document IDs whose extracted text will be merged with the primary document."
     )
+    selected_indicators: List[str] = Field(
+        default_factory=list,
+        description="List of indicator IDs (e.g. IND-01) to focus on during generation."
+    )
 
 
 class QuestionDraft(BaseModel):

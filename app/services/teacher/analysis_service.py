@@ -82,6 +82,7 @@ class AnalysisService:
                 "status": analysis_dict.get("status", "success"),
                 "message": analysis_dict.get("message", "วิเคราะห์สำเร็จ"),
                 "keywords_found": analysis_dict.get("keywords_found", []),
+                "indicators": analysis_dict.get("indicators", []),
                 "analyzed_char_count": analysis_dict.get("analyzed_char_count", 0),
             }
         except Exception as e:
@@ -115,6 +116,7 @@ class AnalysisService:
             "status": "failed",
             "message": message,
             "keywords_found": [],
+            "indicators": [],
             "analyzed_char_count": 0,
         }
         

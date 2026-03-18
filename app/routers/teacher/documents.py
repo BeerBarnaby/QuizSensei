@@ -15,7 +15,8 @@ from app.schemas.teacher.document import (
     DocumentUploadResponse,
     ExtractionMetadataResponse,
     ExtractionContentResponse,
-    ExtractionPreviewResponse
+    ExtractionPreviewResponse,
+    BatchExtractionRequest
 )
 from app.schemas.teacher.analysis import AnalysisResultResponse
 from app.schemas.teacher.question import QuestionGenerationResponse, QuestionGenerationRequest, QuestionDraft
@@ -53,9 +54,24 @@ def _validate_extension(filename: str, allowed: set[str]) -> str:
 
 
 def _safe_filename(original: str) -> str:
+    # Use only ASCII alphanumeric characters for the filename to avoid encoding issues
+    # in different environments (Docker, Windows, Linux locales).
+    import unicodedata
+    import re
+    
     stem = Path(original).stem
     suffix = Path(original).suffix.lower()
-    safe_stem = "".join(c if c.isalnum() or c in "-_." else "_" for c in stem)
+    
+    # Normalize to NFC and then to ASCII, replacing non-ASCII with '_'
+    # This is a safe way to handle Thai characters by replacing them with underscores
+    # while keeping ASCII characters.
+    safe_stem = "".join(c if ord(c) < 128 and (c.isalnum() or c in "-_.") else "_" for c in stem)
+    # Collapse multiple underscores
+    safe_stem = re.sub(r'_{2,}', '_', safe_stem).strip('_')
+    
+    if not safe_stem:
+        safe_stem = "document"
+        
     short_uid = uuid.uuid4().hex[:8]
     return f"{short_uid}_{safe_stem}{suffix}"
 
@@ -134,6 +150,7 @@ async def upload_document(
         size_bytes=size_bytes,
         extension=ext,
         upload_path=str(dest_path),
+        target_audience_level=target_audience_level,
         uploaded_at=datetime.now(timezone.utc),
     )
 
@@ -163,6 +180,47 @@ async def extract_document_text(
     document_service: DocumentService = Depends(get_document_service),
 ) -> dict:
     return await document_service.extract_document(document_id)
+
+
+@router.post(
+    "/extract-batch",
+    response_model=list[ExtractionMetadataResponse],
+    summary="Extract text from multiple documents",
+    description="Processes multiple files simultaneously and returns a list of extraction metadata.",
+)
+async def extract_documents_batch(
+    request: BatchExtractionRequest,
+    document_service: DocumentService = Depends(get_document_service),
+) -> list:
+    results = []
+    for doc_id in request.document_ids:
+        try:
+            res = await document_service.extract_document(doc_id)
+            results.append(res)
+        except Exception as e:
+            results.append({
+                "document_id": doc_id,
+                "filename": doc_id,
+                "extension": "unknown",
+                "extraction_status": "failed",
+                "char_count": 0,
+                "message": str(e)
+            })
+    return results
+
+
+@router.put(
+    "/{document_id}/content",
+    response_model=ExtractionMetadataResponse,
+    summary="Update extracted content manualy",
+    description="Allows the user to manually edit and save the extracted text content.",
+)
+async def update_document_content(
+    document_id: str,
+    payload: ExtractionContentResponse,
+    document_service: DocumentService = Depends(get_document_service),
+) -> dict:
+    return await document_service.update_document_content(document_id, payload.extracted_text)
 
 
 @router.get(

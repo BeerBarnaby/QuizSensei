@@ -3,7 +3,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: app/Dockerfile
       target: runtime
     container_name: quizsensei_api
     restart: unless-stopped

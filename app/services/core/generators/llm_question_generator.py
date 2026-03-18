@@ -41,12 +41,18 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
             # Level 3-4: Application and Analysis
             return "การประยุกต์ใช้/วิเคราะห์ (Apply / Analyze): คำถามวัดการนำไปใช้ในสถานการณ์จำลอง การคำนวณ การเปรียบเทียบ หรือหาความสัมพันธ์ของตัวแปร"
 
-    def _get_system_prompt(self, topic: str, subtopic: str, difficulty: str, target_audience: str, num_q: int) -> str:
+    def _get_system_prompt(self, topic: str, subtopic: str, difficulty: str, target_audience: str, num_q: int, indicators: List[Dict] = None) -> str:
         blooms_rule = self._map_difficulty_to_blooms(difficulty)
+        
+        indicator_str = ""
+        if indicators:
+            indicator_str = "## 0. ตัวชี้วัดที่ต้องเน้น (Priority Indicators)\n" + "\n".join([f"- {ind['id']}: {ind['text']}" for ind in indicators])
         
         return f"""คุณคือมาสเตอร์ด้านการออกแบบข้อสอบ (Master Question Designer) ที่เชี่ยวชาญด้าน Financial Literacy โดยเฉพาะ
 
 ภารกิจของคุณ: สร้างข้อสอบแบบปรนัยจำนวน {num_q} ข้อ ที่มีคุณภาพสูงและสามารถ "วินิจฉัย" จุดอ่อนของผู้เรียนได้
+
+{indicator_str}
 
 ## 1. ข้อกำหนดสำหรับโจทย์ชุดนี้
 - **หัวข้อ**: {topic} ({subtopic})
@@ -72,6 +78,7 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
     "question_id": "AUTOGEN",
     "topic": "{topic}",
     "subtopic": "{subtopic}",
+    "indicator_id": "<ID ของตัวชี้วัดที่ข้อนี้วัดผล เช่น IND-01>",
     "target_audience_level": "{target_audience}",
     "difficulty": "{difficulty}",
     "question_type": "multiple_choice",
@@ -116,7 +123,10 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
         audience   = request.target_audience_level
         num_q      = request.number_of_questions
 
-        system_prompt = self._get_system_prompt(topic, subtopic, difficulty, audience, num_q)
+        # Use filtered indicators from analysis object
+        indicators = analysis.get("indicators", [])
+
+        system_prompt = self._get_system_prompt(topic, subtopic, difficulty, audience, num_q, indicators)
         user_prompt = (
             f"เริ่มสร้างข้อสอบจำนวน {num_q} ข้อ โดยใช้เนื้อหาอ้างอิงด้านล่างนี้:\n\n"
             f"--- แหล่งข้อมูลอ้างอิง ---\n{text[:4000]}\n--- สิ้นสุดแหล่งข้อมูล ---\n\n"

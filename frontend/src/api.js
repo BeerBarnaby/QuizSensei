@@ -19,7 +19,7 @@ export const apiClient = {
   },
 
   extractDocument: async (documentId) => {
-    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/extract`, {
+    const response = await fetch(`${API_BASE_URL}/documents/${encodeURIComponent(documentId)}/extract`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
@@ -28,7 +28,7 @@ export const apiClient = {
   },
 
   analyzeDocument: async (documentId) => {
-    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/analyze`, {
+    const response = await fetch(`${API_BASE_URL}/documents/${encodeURIComponent(documentId)}/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
@@ -37,7 +37,7 @@ export const apiClient = {
   },
 
   generateQuestions: async (documentId, config) => {
-    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/generate-questions`, {
+    const response = await fetch(`${API_BASE_URL}/documents/${encodeURIComponent(documentId)}/generate-questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
@@ -46,8 +46,22 @@ export const apiClient = {
   },
 
   exportQuiz: async (documentId, format = 'moodle') => {
-    const response = await fetch(`${API_BASE_URL}/exports/${documentId}/${format}`);
+    const response = await fetch(`${API_BASE_URL}/exports/${encodeURIComponent(documentId)}/${format}`);
     if (!response.ok) throw new Error('Export failed');
     return response.blob();
+  },
+
+  getStudentQuiz: async (documentId) => {
+    const response = await fetch(`${API_BASE_URL.replace('/teacher', '/student')}/assessment/${encodeURIComponent(documentId)}/questions`);
+    return response.json();
+  },
+
+  submitAnswer: async (documentId, questionId, selectedKey) => {
+    const response = await fetch(`${API_BASE_URL.replace('/teacher', '/student')}/assessment/${encodeURIComponent(documentId)}/questions/${encodeURIComponent(questionId)}/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ selected_key: selectedKey }),
+    });
+    return response.json();
   }
 };

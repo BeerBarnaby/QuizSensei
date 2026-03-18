@@ -4,7 +4,11 @@ import './App.css'
 
 function App() {
   const [sources, setSources] = useState([])
+  const [selectedIds, setSelectedIds] = useState([])
+  const [selectedIndicators, setSelectedIndicators] = useState([])
   const [activeSource, setActiveSource] = useState(null)
+  const [editingText, setEditingText] = useState('')
+  const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const fileInputRef = useRef(null)
@@ -14,6 +18,13 @@ function App() {
   const [genLoading, setGenLoading] = useState(false)
   const [chatMessage, setChatMessage] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
+  
+  // Student Quiz State
+  const [isQuizMode, setIsQuizMode] = useState(false)
+  const [quizQuestions, setQuizQuestions] = useState([])
+  const [currentQuizIndex, setCurrentQuizIndex] = useState(0)
+  const [quizFeedback, setQuizFeedback] = useState(null)
+  const [quizLoading, setQuizLoading] = useState(false)
 
   const handleExport = async (format) => {
     if (!activeSource) return
@@ -49,7 +60,8 @@ function App() {
     try {
       const result = await apiClient.generateQuestions(activeSource.id, {
         target_audience_level: audience,
-        number_of_questions: 5
+        number_of_questions: 5,
+        selected_indicators: selectedIndicators
       })
       if (result.questions) {
         setQuestions(result.questions)
@@ -63,19 +75,57 @@ function App() {
     }
   }
 
-  const triggerPipeline = async (docId) => {
+  const handleBatchExtract = async () => {
+    if (selectedIds.length === 0) return
+    setLoading(true)
+    setError(null)
     try {
-      setSources(prev => prev.map(s => s.id === docId ? { ...s, status: 'extracting' } : s))
-      await apiClient.extractDocument(docId)
+      const results = await apiClient.extractBatch(selectedIds)
+      setSources(prev => prev.map(s => {
+        const res = results.find(r => r.document_id === s.id)
+        return res ? { ...s, status: res.extraction_status, char_count: res.char_count } : s
+      }))
+    } catch (err) {
+      setError('Batch extraction failed.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveContent = async () => {
+    if (!activeSource || !editingText) return
+    setLoading(true)
+    try {
+      await apiClient.updateDocumentContent(activeSource.id, editingText)
+      setIsEditing(false)
+      // Trigger analysis after manual edit
+      triggerAnalysis(activeSource.id)
+    } catch (err) {
+      setError('Failed to save content.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const triggerAnalysis = async (docId) => {
+    try {
       setSources(prev => prev.map(s => s.id === docId ? { ...s, status: 'analyzing' } : s))
-      const analysisResult = await apiClient.analyzeDocument(docId)
+      const result = await apiClient.analyzeDocument(docId)
       setSources(prev => prev.map(s => 
-        s.id === docId ? { ...s, analysis: analysisResult, status: 'analyzed' } : s
+        s.id === docId ? { ...s, analysis: result, status: 'analyzed' } : s
       ))
     } catch (err) {
-      console.error('Pipeline failed', err)
+      setError('Analysis failed.')
       setSources(prev => prev.map(s => s.id === docId ? { ...s, status: 'error' } : s))
     }
+  }
+
+  const toggleSelection = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
+  }
+
+  const toggleIndicator = (id) => {
+    setSelectedIndicators(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }
 
   const handleUpload = async (e) => {
@@ -87,10 +137,8 @@ function App() {
       const result = await apiClient.uploadFile(file, audience)
       if (result.saved_as) {
         const docId = result.saved_as
-        const newSource = { id: docId, name: file.name, status: 'uploading' }
+        const newSource = { id: docId, name: file.name, status: 'uploaded' }
         setSources(prev => [...prev, newSource])
-        setActiveSource(newSource)
-        triggerPipeline(docId)
       } else {
         setError('Upload failed')
       }
@@ -115,10 +163,19 @@ function App() {
             <div 
               key={s.id} 
               className={`source-item ${activeSource?.id === s.id ? 'active' : ''}`}
-              onClick={() => { setActiveSource(s); setQuestions([]); }}
             >
-              <span>{s.status === 'analyzed' ? '✨' : s.error ? '❌' : '⏳'}</span>
-              <span className="source-name" title={s.name}>{s.name}</span>
+              <input 
+                type="checkbox" 
+                checked={selectedIds.includes(s.id)}
+                onChange={() => toggleSelection(s.id)}
+                style={{ marginRight: '8px' }}
+              />
+              <span onClick={() => { setActiveSource(s); setQuestions([]); setIsEditing(false); }}>
+                {s.status === 'analyzed' ? '✨' : s.error ? '❌' : s.status === 'success' ? '📝' : '⏳'}
+              </span>
+              <span className="source-name" title={s.name} onClick={() => { setActiveSource(s); setQuestions([]); setIsEditing(false); }}>
+                {s.name}
+              </span>
             </div>
           ))}
           {sources.length === 0 && <p style={{ padding: '0 12px', color: '#999', fontSize: '0.8rem', fontStyle: 'italic' }}>Drop documents here</p>}
@@ -138,6 +195,15 @@ function App() {
           disabled={loading}
         >
           {loading ? 'Preparing...' : '＋ Add Source'}
+        </button>
+
+        <button 
+          className="primary-action-btn" 
+          style={{ width: '100%', marginTop: '12px' }}
+          onClick={handleBatchExtract}
+          disabled={selectedIds.length === 0 || loading}
+        >
+          {loading ? 'Processing...' : `Extract Selected (${selectedIds.length})`}
         </button>
       </div>
 
@@ -165,7 +231,23 @@ function App() {
             </div>
 
             <div className="analytical-view">
-              {activeSource.status === 'analyzed' ? (
+              {isEditing ? (
+                <div className="edit-container fade-in">
+                  <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ margin: 0 }}>Edit Content</h3>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="secondary-action-btn" onClick={() => setIsEditing(false)}>Cancel</button>
+                      <button className="primary-action-btn" style={{ padding: '8px 20px' }} onClick={handleSaveContent}>Save & Analyze</button>
+                    </div>
+                  </header>
+                  <textarea 
+                    className="content-editor"
+                    value={editingText}
+                    onChange={(e) => setEditingText(e.target.value)}
+                    placeholder="Extracted text will appear here for you to edit..."
+                  />
+                </div>
+              ) : activeSource.status === 'analyzed' ? (
                 <div className="analysis-card">
                   <header>
                     <div className="topic-block">
@@ -184,18 +266,69 @@ function App() {
                   </section>
 
                   <section className="tags-section">
-                    <h4>Key Concepts</h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <h4>Key Concepts</h4>
+                      <button 
+                        className="secondary-action-btn" 
+                        style={{ fontSize: '0.75rem' }}
+                        onClick={async () => {
+                          const content = await apiClient.getDocumentContent(activeSource.id);
+                          setEditingText(content.extracted_text);
+                          setIsEditing(true);
+                        }}
+                      >
+                        ✏️ Edit Source Text
+                      </button>
+                    </div>
                     <div className="tag-cloud">
                       {activeSource.analysis.keywords_found?.map((k, i) => (
                         <span key={i} className="tag">{k}</span>
                       ))}
                     </div>
                   </section>
+
+                  <section className="indicators-section" style={{ marginTop: '32px' }}>
+                    <h4 style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>Selected Indicators for Quiz</h4>
+                    <div className="indicator-grid">
+                      {activeSource.analysis.indicators?.map((ind) => (
+                        <div 
+                          key={ind.id} 
+                          className={`indicator-card ${selectedIndicators.includes(ind.id) ? 'selected' : ''}`}
+                          onClick={() => toggleIndicator(ind.id)}
+                        >
+                          <div className="ind-id">{ind.id}</div>
+                          <p className="ind-text">{ind.text}</p>
+                          <span className="ind-relevance">{ind.relevance}</span>
+                        </div>
+                      ))}
+                      {(!activeSource.analysis.indicators || activeSource.analysis.indicators.length === 0) && (
+                        <p style={{ fontSize: '0.85rem', color: '#999', fontStyle: 'italic' }}>No indicators extracted. Try editing the text and re-analyzing.</p>
+                      )}
+                    </div>
+                  </section>
                 </div>
               ) : (
                 <div className="pipeline-loading">
                   <div className="spinner"></div>
-                  <p>{activeSource.status === 'extracting' ? 'Reading document...' : 'AI is analyzing content...'}</p>
+                  <p>
+                    {activeSource.status === 'extracting' ? 'Reading document...' : 
+                     activeSource.status === 'analyzing' ? 'AI is analyzing content...' : 
+                     activeSource.status === 'success' ? 'Extraction complete. Ready for analysis.' : 
+                     'Waiting for extraction...'}
+                  </p>
+                  {activeSource.status === 'success' && (
+                    <button 
+                      className="primary-action-btn" 
+                      style={{ marginTop: '20px', width: 'auto' }}
+                      onClick={async () => {
+                        const content = await apiClient.getDocumentContent(activeSource.id);
+                        setEditingText(content.extracted_text);
+                        setIsEditing(true);
+                      }}
+                    >
+                      View & Edit Text
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -247,6 +380,15 @@ function App() {
           >
             {genLoading ? 'Thinking...' : 'Generate Quiz'}
           </button>
+
+          <button 
+            className="secondary-action-btn"
+            style={{ width: '100%', marginTop: '12px', borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)' }}
+            onClick={handleTakeQuiz}
+            disabled={activeSource?.status !== 'analyzed' || quizLoading}
+          >
+            {quizLoading ? 'Loading Quiz...' : '🎯 Take Student Quiz'}
+          </button>
         </div>
 
         <div className="workbench-status">
@@ -276,6 +418,70 @@ function App() {
           </div>
         </div>
       </div>
+
+      {isQuizMode && (
+        <div className="quiz-overlay fade-in">
+          <div className="quiz-modal">
+            <header className="quiz-header">
+              <div className="quiz-progress">
+                Question {currentQuizIndex + 1} of {quizQuestions.length}
+              </div>
+              <button className="close-btn" onClick={() => setIsQuizMode(false)}>✕</button>
+            </header>
+
+            <div className="quiz-body">
+              <div className="q-card-large">
+                <div className="q-topic-tag">{quizQuestions[currentQuizIndex]?.topic}</div>
+                <h2 className="q-text-large">{quizQuestions[currentQuizIndex]?.question_text}</h2>
+                
+                <div className="options-list-large">
+                  {Object.entries(quizQuestions[currentQuizIndex]?.options || {}).map(([key, text]) => (
+                    <button 
+                      key={key}
+                      className={`option-item-large ${quizFeedback ? (quizFeedback.correct_answer === key ? 'correct' : 'incorrect') : ''}`}
+                      onClick={() => !quizFeedback && handleSubmitAnswer(key)}
+                      disabled={!!quizFeedback}
+                    >
+                      <span className="option-letter">{key}</span>
+                      <span className="option-text">{text}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {quizFeedback && (
+                  <div className="diagnostic-feedback fade-in">
+                    <div className={`feedback-banner ${quizFeedback.is_correct ? 'success' : 'warning'}`}>
+                      {quizFeedback.is_correct ? '✨ Correct!' : '🤔 Not quite...'}
+                    </div>
+                    <div className="feedback-content">
+                      <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>{quizFeedback.diagnostic_message}</pre>
+                      {quizFeedback.suggested_review_topic && (
+                        <div className="review-suggestion">
+                          <strong>Suggested Review:</strong> {quizFeedback.suggested_review_topic}
+                        </div>
+                      )}
+                    </div>
+                    <button 
+                      className="primary-action-btn" 
+                      style={{ marginTop: '20px' }}
+                      onClick={() => {
+                        if (currentQuizIndex < quizQuestions.length - 1) {
+                          setCurrentQuizIndex(prev => prev + 1)
+                          setQuizFeedback(null)
+                        } else {
+                          setIsQuizMode(false)
+                        }
+                      }}
+                    >
+                      {currentQuizIndex < quizQuestions.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
