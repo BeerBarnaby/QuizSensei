@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: runtime # Use the lean runtime stage
+      target: runtime
     container_name: quizsensei_api
     restart: unless-stopped
     env_file:
@@ -14,22 +14,29 @@ services:
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
-      # Persist uploads outside the container so files survive restarts
       - uploads_data:/app/uploads
-      # Mount source for live-reload during development
       - ./app:/app/app:ro
-      - ./frontend:/app/frontend:ro
     healthcheck:
       test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: quizsensei_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
 
   db:
     image: postgres:15-alpine

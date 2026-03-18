@@ -3,8 +3,8 @@ Image extractor for QuizSensei.
 Uses OCRService to extract text from JPG, PNG, WEBP files.
 """
 from typing import Optional
-from app.services.extractors.base import BaseExtractor
-from app.services.ocr_service import ocr_service
+from app.services.core.extractors.base import BaseExtractor
+from app.services.core.ocr_service import ocr_service
 import logging
 
 logger = logging.getLogger(__name__)

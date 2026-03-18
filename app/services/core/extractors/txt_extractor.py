@@ -5,7 +5,7 @@ Simple reader for .txt files using standard UTF-8 encoding.
 import aiofiles
 from pathlib import Path
 
-from app.services.extractors.base import BaseExtractor
+from app.services.core.extractors.base import BaseExtractor
 
 
 class TxtExtractor(BaseExtractor):
