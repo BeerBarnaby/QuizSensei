@@ -4,11 +4,13 @@ Orchestrates file storage, extraction strategies, and cleanup.
 """
 
 import json
+import uuid
 from pathlib import Path
 from typing import Dict, Any, Optional
 
 import aiofiles
 from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.services.core.extractors.txt_extractor import TxtExtractor
@@ -47,13 +49,16 @@ class DocumentService:
         
         return sidecar_path
 
-    async def extract_document(self, document_id: str) -> Dict[str, Any]:
+    async def extract_document(self, document_id: str, db: Optional[AsyncSession] = None) -> Dict[str, Any]:
         """
         Extracts content from a document using the appropriate strategy and
         saves a JSON sidecar file containing metadata + full text.
         Returns the metadata dict (without full text) to the caller.
         """
         from app.core.llm import logger
+        from app.models.document import Document
+        from sqlalchemy.future import select
+
         logger.info(f"--- START EXTRACTION for {document_id} ---")
         
         doc_path = self._get_document_path(document_id)
@@ -104,7 +109,36 @@ class DocumentService:
         async with aiofiles.open(sidecar_path, "w", encoding="utf-8") as f:
             await f.write(json.dumps(result, ensure_ascii=False, indent=2))
 
-        # Return metadata (exclude the raw bulk text payload)
+        # ── Update Database State ──────────────────────────────────────────
+        if db:
+            try:
+                # 1. Attempt lookup by UUID (Preferred)
+                db_doc = None
+                try:
+                    target_uuid = uuid.UUID(document_id)
+                    query = select(Document).where(Document.id == target_uuid)
+                    db_res = await db.execute(query)
+                    db_doc = db_res.scalar_one_or_none()
+                except (ValueError, AttributeError):
+                    # Not a UUID, fallback to Filename/StoragePath lookup
+                    pass
+
+                # 2. Fallback lookup by storage_path suffix
+                if not db_doc:
+                    # Search for documents where storage_path contains the filename
+                    # document_id here is something like 'dcf592ba_document.txt'
+                    query = select(Document).where(Document.storage_path.like(f"%{document_id}"))
+                    db_res = await db.execute(query)
+                    db_doc = db_res.scalar_one_or_none()
+
+                if db_doc:
+                    db_doc.extraction_state = "extracted"
+                    await db.commit()
+                else:
+                    logger.warning(f"DB Update: Document record not found for {document_id}")
+            except Exception as de:
+                logger.error(f"Failed to update extraction state in DB: {de}")
+        
         logger.info(f"--- EXTRACTION COMPLETE for {document_id} ({len(extracted_text)} chars) ---")
         return self._strip_text(result)
 
@@ -180,8 +214,8 @@ class DocumentService:
         # Paths to specific user files
         doc_path = self._get_document_path(safe_id)
         extraction_path = self._get_sidecar_path(safe_id)
-        analysis_path = self.settings.ANALYSIS_DIR / f"{safe_id}.json"
-        questions_path = self.settings.QUESTIONS_DIR / f"{safe_id}.json"
+        analysis_path = self.settings.ANALYSIS_DIR / f"{safe_id}_analysis.json"
+        questions_path = self.settings.QUESTIONS_DIR / f"{safe_id}_questions.json"
         
         # Check if the primary document exists
         if not doc_path.exists():

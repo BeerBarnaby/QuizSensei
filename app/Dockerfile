@@ -23,11 +23,8 @@ LABEL maintainer="QuizSensei Team"
 LABEL app="quizsensei-api"
 LABEL version="0.1.0"
 
-# Install runtime system packages for OCR
+# Install minimal runtime system packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    tesseract-ocr \
-    tesseract-ocr-tha \
-    poppler-utils \
     libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 

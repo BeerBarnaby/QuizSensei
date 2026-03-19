@@ -4,11 +4,13 @@ Coordinates extraction data with Agent 1 (Analyzer).
 """
 
 import json
+import uuid
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import aiofiles
 from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.services.core.analyzers.llm_financial_literacy_analyzer import LLMFinancialLiteracyAnalyzer
@@ -31,16 +33,20 @@ class AnalysisService:
         safe_id = Path(document_id).name
         return self.settings.ANALYSIS_DIR / f"{safe_id}_analysis.json"
 
-    async def analyze_document(self, document_id: str) -> Dict[str, Any]:
+    async def analyze_document(self, document_id: str, db: Optional[Any] = None) -> Dict[str, Any]:
         """
         Main pipeline: Validates extraction exists -> Runs analysis -> Saves analysis sidecar.
         """
+        from app.models.document import Document
+        from sqlalchemy.future import select
+        from app.core.llm import logger
+
         # 1. Verify document has been extracted
         extracted_path = self._get_extracted_sidecar_path(document_id)
         if not extracted_path.exists():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Extraction data not found. Please run the /extract endpoint first."
+                detail="Analysis data not found. Please run the /extract endpoint first."
             )
 
         # 2. Load the extracted text
@@ -97,6 +103,34 @@ class AnalysisService:
         async with aiofiles.open(analysis_path, "w", encoding="utf-8") as f:
             await f.write(json.dumps(result, ensure_ascii=False, indent=2))
 
+        # ── Update Database State ──────────────────────────────────────────
+        if db:
+            try:
+                # 1. Attempt lookup by UUID (Preferred)
+                db_doc = None
+                try:
+                    target_uuid = uuid.UUID(document_id)
+                    query = select(Document).where(Document.id == target_uuid)
+                    db_res = await db.execute(query)
+                    db_doc = db_res.scalar_one_or_none()
+                except (ValueError, AttributeError):
+                    # Not a UUID, fallback to Filename/StoragePath lookup
+                    pass
+
+                # 2. Fallback lookup by storage_path suffix
+                if not db_doc:
+                    query = select(Document).where(Document.storage_path.like(f"%{document_id}"))
+                    db_res = await db.execute(query)
+                    db_doc = db_res.scalar_one_or_none()
+
+                if db_doc:
+                    db_doc.extraction_state = "analyzed"
+                    await db.commit()
+                else:
+                    logger.warning(f"DB Update (Analysis): Document record not found for {document_id}")
+            except Exception as de:
+                logger.error(f"Failed to update analysis state in DB: {de}")
+
         return result
 
     async def _save_and_return_failed_status(self, document_id: str, filename: str, message: str) -> Dict[str, Any]:
@@ -123,7 +157,7 @@ class AnalysisService:
         analysis_path = self._get_analysis_sidecar_path(document_id)
         
         async with aiofiles.open(analysis_path, "w", encoding="utf-8") as f:
-            await f.write(json.dumps(result, indent=2))
+            await f.write(json.dumps(result, ensure_ascii=False, indent=2))
             
         return result
 

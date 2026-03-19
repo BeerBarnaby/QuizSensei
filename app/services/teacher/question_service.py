@@ -172,7 +172,13 @@ class QuestionGenerationService:
         async with aiofiles.open(questions_path, "w", encoding="utf-8") as f:
             await f.write(json.dumps(result, ensure_ascii=False, indent=2))
 
-        # ── Persist APPROVED to PostgreSQL ───────────────────
+        # ── Persist APPROVED to PostgreSQL (Clean-before-Save) ───────────────────
+        from sqlalchemy import delete
+        
+        # 1. Purge old records for this document to ensure DB matches the latest sidecar
+        await db.execute(delete(QuestionRecord).where(QuestionRecord.document_id == document_id))
+        
+        # 2. Insert new approved records
         for q in approved_questions:
             db_record = QuestionRecord(
                 id=q["question_id"],
@@ -183,8 +189,9 @@ class QuestionGenerationService:
                 difficulty=q.get("difficulty", "unknown"),
                 payload=q,
             )
-            await db.merge(db_record)
-        if approved_questions:
+            db.add(db_record)
+            
+        if approved_questions or True: # Always commit to confirm the purge even if 0 results
             await db.commit()
 
         return result

@@ -191,18 +191,14 @@ async def delete_document_route(
     return await document_service.delete_document(document_id)
 
 
-@router.post(
-    "/{document_id}/extract",
-    response_model=ExtractionMetadataResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Extract text from document",
-    description="Parses the document, saves the extracted text as a sidecar JSON file, and returns extraction metadata.",
-)
-async def extract_document_text(
+@router.post("/{document_id}/extract")
+async def extract_document(
     document_id: str,
     document_service: DocumentService = Depends(get_document_service),
+    db: AsyncSession = Depends(get_db_session)
 ) -> dict:
-    return await document_service.extract_document(document_id)
+    """Trigger text extraction for a previously uploaded document."""
+    return await document_service.extract_document(document_id, db=db)
 
 
 @router.post(
@@ -301,8 +297,9 @@ async def get_document_content(
 async def analyze_document(
     document_id: str,
     analysis_service: AnalysisService = Depends(get_analysis_service),
+    db: AsyncSession = Depends(get_db_session),
 ) -> dict:
-    return await analysis_service.analyze_document(document_id)
+    return await analysis_service.analyze_document(document_id, db=db)
 
 
 @router.get(

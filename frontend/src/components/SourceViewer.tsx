@@ -25,9 +25,27 @@ export default function SourceViewer() {
       </div>
 
       {sourceAnalysis && (
-        <div className="p-4 bg-blue-50 border-t border-blue-100">
-          <h3 className="font-semibold text-sm text-blue-900">ผลการวิเคราะห์ Gatekeeper:</h3>
-          <p className="text-sm text-blue-800 mt-1">{sourceAnalysis.sufficiency_reason}</p>
+        <div className={`p-4 border-t ${
+          sourceAnalysis.analysis_status === 'failed' || sourceAnalysis.status === 'error'
+            ? 'bg-red-50 border-red-100' 
+            : 'bg-blue-50 border-blue-100'
+        }`}>
+          <h3 className={`font-semibold text-sm ${
+            sourceAnalysis.analysis_status === 'failed' || sourceAnalysis.status === 'error'
+              ? 'text-red-900' 
+              : 'text-blue-900'
+          }`}>
+            {sourceAnalysis.analysis_status === 'failed' || sourceAnalysis.status === 'error'
+              ? '⚠️ การวิเคราะห์ขัดข้อง:' 
+              : '✅ ผลการวิเคราะห์ Gatekeeper:'}
+          </h3>
+          <p className={`text-sm mt-1 ${
+            sourceAnalysis.analysis_status === 'failed' || sourceAnalysis.status === 'error'
+              ? 'text-red-800' 
+              : 'text-blue-800'
+          }`}>
+            {sourceAnalysis.sufficiency_reason || sourceAnalysis.message}
+          </p>
         </div>
       )}
     </div>

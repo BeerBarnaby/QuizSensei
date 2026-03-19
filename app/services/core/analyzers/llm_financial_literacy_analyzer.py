@@ -35,18 +35,14 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
         self.settings = settings
         self.model = settings.OPENROUTER_MODEL
 
-    def _get_system_prompt(self) -> str:
-        taxonomy_str = "\n".join(
-            f"  {i+1}. {topic}: [{', '.join(subs)}]"
-            for i, (topic, subs) in enumerate(self.FL_TAXONOMY.items())
-        )
-        return f"""คุณคือผู้เชี่ยวชาญด้านการวางแผนการเงินและบรรณาธิการเนื้อหาอาวุโส (Senior Financial Literacy Analyst) ประจำแพลตฟอร์ม QuizSensei
+    def _get_system_prompt(self, taxonomy_str: str) -> str:
+        prompt = """คุณคือผู้เชี่ยวชาญด้านการวางแผนการเงินและบรรณาธิการเนื้อหาอาวุโส (Senior Financial Literacy Analyst) ประจำแพลตฟอร์ม QuizSensei
 
 ภารกิจของคุณ: วิเคราะห์เนื้อหาที่อัปโหลด (ภาษาไทยเป็นหลัก) เพื่อเตรียมความพร้อมสำหรับการสร้างข้อสอบที่มีคุณภาพสูง
 
 ## 1. การวิเคราะห์หมวดหมู่ (Taxonomy Classification)
 ระบุกลุ่มเนื้อหาที่เข้าข่ายที่สุดจากมาตรฐานการเงินพื้นฐาน:
-{taxonomy_str}
+{{TAXONOMY_STR}}
 
 ## 2. การประเมินระดับภาษาและผู้เรียน (Learner Level Assessment)
 วิเคราะห์ความยากของเนื้อหาและเลือกกลุ่มเป้าหมายที่เหมาะสมที่สุด (เลือก 1 จาก 5 ระดับนี้เท่านั้น):
@@ -66,8 +62,12 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
 - ตัวอย่าง: "คำนวณดอกเบี้ยทบต้นได้", "จำแนกความแตกต่างระหว่างความต้องการและความจำเป็น", "เลือกประเภทประกันภัยที่เหมาะสมกับความเสี่ยง"
 
 ## 5. รูปแบบการตอบกลับ (Output Format)
-กรุณาส่งกลับเป็น JSON ภายใน Markdown Code Block (```json ... ```) โดยใช้โครงสร้างนี้:
-{{
+### ข้อปฏิบัติที่สำคัญมาก:
+- ตอบกลับเป็น **JSON ภายใน Markdown Code Block (```json ... ```) เท่านั้น**
+- **ห้ามมีข้อความเกริ่นนำหรือสรุปปิดท้าย** (No conversation, no filler text)
+- ตรวจสอบว่าโครงสร้าง JSON ถูกต้องและไม่มีเครื่องหมายจุลภาค (comma) เกิน
+- ใช้โครงสร้างนี้เท่านั้น:
+{
   "topic": "<slug ภาษาอังกฤษ>",
   "subtopic": "<slug ภาษาอังกฤษ>",
   "suggested_learner_level": "<ระดับภาษาไทย>",
@@ -83,8 +83,9 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
   "status": "success",
   "message": "<สรุปภาพรวมการวิเคราะห์สั้นๆ>",
   "keywords_found": ["คำค้น 1", "คำค้น 2"]
-}}
+}
 """
+        return prompt.replace("{{TAXONOMY_STR}}", taxonomy_str)
 
     async def analyze(self, text: str) -> Dict[str, Any]:
         """Agent 1 pipeline: classify document and evaluate sufficiency."""
@@ -94,7 +95,12 @@ class LLMFinancialLiteracyAnalyzer(BaseAnalyzer):
         import asyncio
         from app.core.llm import call_openrouter_json
         
-        full_prompt = f"{self._get_system_prompt()}\n\nข้อความสำหรับวิเคราะห์:\n{truncated}"
+        taxonomy_str = "\n".join(
+            f"  {i+1}. {topic}: [{', '.join(subs)}]"
+            for i, (topic, subs) in enumerate(self.FL_TAXONOMY.items())
+        )
+        system_prompt = self._get_system_prompt(taxonomy_str)
+        full_prompt = f"{system_prompt}\n\nข้อความสำหรับวิเคราะห์:\n{truncated}"
         
         parsed = await asyncio.to_thread(
             call_openrouter_json,

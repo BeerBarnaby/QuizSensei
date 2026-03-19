@@ -47,6 +47,14 @@ app = FastAPI(
 )
 
 # ── Middleware ─────────────────────────────────────────────────────────────
+@app.middleware("http")
+async def log_requests(request, call_next):
+    from app.core.llm import logger
+    logger.info(f"REQ: {request.method} {request.url.path}")
+    response = await call_next(request)
+    logger.info(f"RES: {request.method} {request.url.path} -> {response.status_code}")
+    return response
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],   # Tighten this in production

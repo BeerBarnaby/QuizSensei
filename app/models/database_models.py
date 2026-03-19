@@ -38,7 +38,7 @@ class AnswerAttempt(Base):
     __tablename__ = "answer_attempts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    question_id = Column(String(50), ForeignKey("questions.id"), nullable=False, index=True)
+    question_id = Column(String(50), ForeignKey("questions.id", ondelete="CASCADE"), nullable=False, index=True)
     user_id = Column(String(100), nullable=True, index=True) # Optional for MVP anonymous users
     
     selected_choice_key = Column(String(10), nullable=False)

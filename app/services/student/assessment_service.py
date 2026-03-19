@@ -46,8 +46,8 @@ class AssessmentService:
         for q in questions:
             sq = {
                 "question_id": q.get("question_id"),
-                "question_text": q.get("question_text"),
-                "options": q.get("options", {}),
+                "question_text": q.get("stem") or q.get("question_text"),
+                "options": q.get("choices") or q.get("options", {}),
                 "topic": q.get("topic"),
                 "subtopic": q.get("subtopic"),
                 "difficulty": q.get("difficulty")
