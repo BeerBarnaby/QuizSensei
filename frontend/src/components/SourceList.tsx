@@ -11,7 +11,7 @@ export default function SourceList() {
 
   const fetchDocuments = async () => {
     try {
-      const res = await fetch('http://localhost:8000/documents/');
+      const res = await fetch('http://localhost:8000/api/v1/teacher/');
       if (res.ok) {
         const data = await res.json();
         setDocuments(data);
@@ -41,7 +41,7 @@ export default function SourceList() {
 
     try {
       // 1. Upload
-      const uploadRes = await fetch('http://localhost:8000/documents/upload', {
+      const uploadRes = await fetch('http://localhost:8000/api/v1/teacher/upload', {
         method: 'POST',
         body: formData
       });
@@ -53,15 +53,15 @@ export default function SourceList() {
       await fetchDocuments();
 
       // 2. Extract Text
-      const extractRes = await fetch(`http://localhost:8000/documents/${docId}/extract`, { method: 'POST' });
+      const extractRes = await fetch(`http://localhost:8000/api/v1/teacher/${docId}/extract`, { method: 'POST' });
       if (!extractRes.ok) throw new Error("Extraction failed");
       
-      const contentRes = await fetch(`http://localhost:8000/documents/${docId}/content`);
+      const contentRes = await fetch(`http://localhost:8000/api/v1/teacher/${docId}/content`);
       const contentData = await contentRes.json();
       setExtractedText(contentData.extracted_text || "");
 
       // 3. Analyze (Agent 1 Gatekeeper)
-      const analyzeRes = await fetch(`http://localhost:8000/documents/${docId}/analyze`, { method: 'POST' });
+      const analyzeRes = await fetch(`http://localhost:8000/api/v1/teacher/${docId}/analyze`, { method: 'POST' });
       if (!analyzeRes.ok) throw new Error("Analysis failed");
       const analysisData = await analyzeRes.json();
       setSourceAnalysis(analysisData);
@@ -85,14 +85,14 @@ export default function SourceList() {
 
     try {
       // Try to load text
-      const contentRes = await fetch(`http://localhost:8000/documents/${docId}/content`);
+      const contentRes = await fetch(`http://localhost:8000/api/v1/teacher/${docId}/content`);
       if (contentRes.ok) {
         const contentData = await contentRes.json();
         setExtractedText(contentData.extracted_text || "");
       }
 
       // Try to load analysis
-      const analyzeRes = await fetch(`http://localhost:8000/documents/${docId}/analysis`);
+      const analyzeRes = await fetch(`http://localhost:8000/api/v1/teacher/${docId}/analysis`);
       if (analyzeRes.ok) {
         const analyzeData = await analyzeRes.json();
         setSourceAnalysis(analyzeData);

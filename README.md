@@ -1,63 +1,99 @@
-# QuizSensei
+# 🎓 QuizSensei: Document-Grounded Diagnostic Assessment Platform
 
-**AI-Driven Diagnostic Assessment Platform for Financial Literacy**
-
-QuizSensei เป็นแพลตฟอร์มอัจฉริยะที่ใช้เทคโนโลยี **Multi-Agent LLM** เพื่อแปลงเอกสารความรู้ทางการเงิน (Financial Literacy) ให้เป็นแบบทดสอบเชิงวินิจฉัย (Diagnostic Assessment) แบบอัตโนมัติ พร้อมตรวจคำตอบและให้คำแนะนำแบบเฉพาะตัว (Personalized Coaching) โดยใช้หลักการ Zero-Hallucination
+**QuizSensei** คือแพลตฟอร์มสร้างข้อสอบอัจฉริยะที่ใช้ระบบ Multi-Agent LLM ในการวิเคราะห์เอกสารและสร้างข้อสอบปรนัย (MCQ) ที่มีคุณภาพสูง โดยเน้นความถูกต้องของเนื้อหา (**Zero Hallucination**) และการให้คำแนะนำเชิงวินิจฉัย (**Diagnostic Feedback**) เพื่อช่วยให้ผู้เรียนเข้าใจจุดที่ควรปรับปรุง
 
 ---
 
-## 1. ฟีเจอร์หลัก (Key Features)
+## ✨ Key Features
 
-- **📄 Document Upload & Extraction:** อัปโหลดและสกัดข้อความจากแหล่งข้อมูล (PDF, TXT, DOCX, Images)
-- **🤖 4-Agent Pipeline:**
-  - **Agent 1 (Gatekeeper & Analyzer):** ตรวจสอบว่าเอกสารมีความรู้เพียงพอต่อการออกข้อสอบหรือไม่ (Content Sufficiency) เเละระบุระดับผู้เรียนทั้ง 5 ระดับ (ประถม, มัธยมต้น, มัธยมปลาย, มหาวิทยาลัย, วัยทำงาน)
-  - **Agent 2 (Generator):** สร้างข้อสอบแบบปรนัย 4 ตัวเลือก โดยอิงจากเอกสาร 100% (Zero-hallucination) พร้อมสร้างตัวเลือกหลอก (Diagnostic Distractors) ที่สะท้อนความเข้าใจผิดที่พบได้บ่อย
-  - **Agent 3 (Auditor):** ตรวจทานข้อสอบกับต้นฉบับอย่างเข้มงวด หากเนื้อหาไม่ตรงจะยกเลิกและสั่งสร้างใหม่ทันที (Auto-Regeneration)
-  - **Agent 4 (Grader & Coach):** ตรวจคำตอบของนักเรียนและให้คำอธิบายที่เข้าใจง่าย เพื่อชี้จุดที่เข้าใจผิด
-- **💻 Modern Next.js Interface:** หน้าบ้านรูปแบบ 3 คอลัมน์ (NotebookLM-style) ที่ใช้งานง่าย รวดเร็ว และรองรับภาษาไทยเต็มรูปแบบ
+- 📑 **Source-Grounded Extraction**: รองรับการอัปโหลดไฟล์ PDF, DOCX และ TXT พร้อมระบบสกัดข้อความที่แม่นยำ
+- 🤖 **4-Agent Pipeline**: ระบบ AI 4 ระดับที่ทำงานร่วมกันเพื่อคุณภาพสูงสุด:
+  1. **Analyzer (Agent 1)**: วิเคราะห์เนื้อหาและกำหนดหัวข้อการเรียนรู้
+  2. **Generator (Agent 2)**: สร้างคำถามพร้อมตัวเลือกและคำอธิบาย (Rationales) ในภาษาไทย
+  3. **Auditor (Agent 3)**: ตรวจสอบความถูกต้องและป้องกันการแสดงข้อมูลที่ไม่มีในต้นฉบับ (Hallucination)
+  4. **Grader (Agent 4)**: ตรวจข้อสอบนักเรียนและให้คำแนะนำส่วนบุคคลเชิงโค้ชชิ่ง
+- 🎯 **Diagnostic Assessment**: ข้อสอบที่ออกแบบมาเพื่อค้นหา "ความเข้าใจคลาดเคลื่อน" (Misconceptions) ของผู้เรียน
+- 📱 **3-Panel UI**: หน้าจอการจัดการสำหรับครูที่ใช้งานง่าย (Source List | Viewer | Generator)
+- 🎓 **Student Portal**: อินเตอร์เฟซสำหรับผู้เรียนที่สะอาดตา พร้อมระบบตรวจข้อสอบทันที
+- 🐳 **Dockerized Setup**: ติดตั้งง่ายด้วย Docker Compose ทั้งระบบ Frontend และ Backend
 
 ---
 
-## 2. วิธีการติดตั้งและรันโปรเจกต์ (Installation & Setup)
+## 🏗️ Architecture
 
-### วิธีที่ 1: รันผ่าน Docker Compose (แนะนำ)
-รันทั้ง Backend (FastAPI), Frontend (Next.js), Database (Postgres) และ Cache (Redis) ในคำสั่งเดียว
-1. สร้างไฟล์ `.env` ในโฟลเดอร์หลัก และกำหนดค่า API Key:
-   ```env
-   OPENROUTER_API_KEY=your_key_here
-   OPENROUTER_MODEL=google/gemini-2.5-flash
+ระบบสร้างขึ้นด้วยสถาปัตยกรรมที่ทันสมัยและยืดหยุ่น:
+- **Frontend**: [Next.js 15](https://nextjs.org/) (App Router), Tailwind CSS, Zustand
+- **Backend**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.12), SQLAlchemy, Uvicorn
+- **Database**: PostgreSQL (Structured Data), Redis (Task Queue/Caching)
+- **AI Core**: OpenRouter API (รองรับ Gemini Flash และโมเดลชั้นนำอื่นๆ)
+
+---
+
+## 🚀 Quick Start (Docker)
+
+วิธีที่เร็วที่สุดในการรันระบบคือการใช้ Docker:
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd Nectec26
    ```
-2. รันคำสั่ง Docker:
+
+2. **Set Environment Variables**
+   สร้างไฟล์ `.env` ที่ root directory:
+   ```env
+   OPENROUTER_API_KEY=your_api_key_here
+   OPENROUTER_MODEL=google/gemini-2.0-flash-001
+   DATABASE_URL=postgresql+asyncpg://user:password@db:5432/quizsensei
+   REDIS_URL=redis://redis:6379/0
+   ```
+
+3. **Deploy with Docker Compose**
    ```bash
    docker-compose up --build
    ```
-3. เข้าใช้งานระบบ:
-   - **Frontend:** http://localhost:3000
-   - **Backend API Docs:** http://localhost:8000/docs
 
-### วิธีที่ 2: รันแยกส่วนสำหรับการพัฒนา (Manual Development)
+4. **Access the Application**
+   - **Teacher UI**: [http://localhost:3000](http://localhost:3000)
+   - **Student UI**: [http://localhost:3000/student/[document-id]](http://localhost:3000/student/[document-id])
+   - **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-**Backend (FastAPI):**
-```bash
-python -m venv venv
-venv\Scripts\activate  # Windows
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
+---
 
-**Frontend (Next.js):**
-```bash
-cd frontend
-npm install
-npm run dev
-# ทำงานที่พอร์ต 3000
+## 📂 Project Structure
+
+```text
+Nectec26/
+├── app/                  # FastAPI Backend
+│   ├── core/             # Configuration & LLM Agents
+│   ├── db/               # Database Session & Models
+│   ├── routers/          # API Endpoints (v1)
+│   ├── services/         # Core Logic & 4-Agent Services
+│   └── main.py           # Application Entry Point
+├── frontend/             # Next.js Frontend
+│   ├── src/app/          # Pages & Routes
+│   ├── src/components/   # React Components (SourceList, QuizGenerator, etc.)
+│   └── Dockerfile        # Standalone Build Config
+├── docker-compose.yml    # Full Stack Orchestration
+└── README.md             # This file
 ```
 
 ---
 
-## 3. โครงสร้างโปรเจกต์ (Project Architecture)
+## 🛠️ Tech Stack & Dependencies
 
-- **`app/`**: Backend พัฒนาด้วย FastAPI ประกอบไปด้วย Core Logic, Models (SQLAlchemy), Schemas, Service classes สำหรับ Agents เเละเส้นทาง API (Routers)
-- **`frontend/`**: Frontend พัฒนาด้วย Next.js (App Router), Tailwind CSS v4, Zustand. มี Components หลักสำหรับระบบจัดการเอกสาร (SourceList, SourceViewer) เเละระบบสุ่มข้อสอบ (QuizGenerator)
-- **`uploads/`**: โฟลเดอร์เก็บเอกสารต้นฉบับเเละ JSON sidecars ที่เกี่ยวข้อง
-- **`docker-compose.yml`**: เซ็ตอัป Infrastructure โดยรวมพร้อม Database เเละ Next.js Standalone build
+- **Backend**: FastAPI, PyPDF2, python-docx, SQLAlchemy, Pydantic
+- **Frontend**: Next.js, React, Zustand, Heroicons, Tailwind CSS
+- **Infrastructure**: Docker, Docker Compose, PostgreSQL, Redis
+
+---
+
+## 🤝 Contributing
+
+ยินดีรับการมีส่วนร่วมเพื่อพัฒนาแพลตฟอร์มนี้! หากคุณพบปัญหาหรือต้องการเสนอความสามารถใหม่ๆ สามารถสร้าง Issue หรือ PR ได้ทันที
+
+---
+
+## 📄 License
+
+Project นี้จัดทำขึ้นเพื่อวัตถุประสงค์ทางการศึกษาและพัฒนาเทคโนโลยีการศึกษาไทย

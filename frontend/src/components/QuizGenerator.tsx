@@ -38,7 +38,7 @@ export default function QuizGenerator() {
 
     try {
       // Calls Phase 3 Generation API (Agent 2 -> Agent 3 Loop)
-      const res = await fetch(`http://localhost:8000/documents/${currentSourceId}/generate-questions`, {
+      const res = await fetch(`http://localhost:8000/api/v1/teacher/${currentSourceId}/generate-questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -36,7 +36,7 @@ def get_analysis_service(settings: Settings = Depends(get_settings)) -> Analysis
 def get_question_service(settings: Settings = Depends(get_settings)) -> QuestionGenerationService:
     return QuestionGenerationService(settings)
 
-router = APIRouter(prefix="/documents", tags=["documents"])
+router = APIRouter(tags=["documents"])
 
 
 

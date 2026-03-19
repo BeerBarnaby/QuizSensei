@@ -36,7 +36,7 @@ export default function StudentQuizPage() {
 
   useEffect(() => {
     if (!documentId) return;
-    fetch(`http://localhost:8000/assessment/${documentId}/questions`)
+    fetch(`http://localhost:8000/api/v1/student/assessment/${documentId}/questions`)
       .then(res => {
         if (!res.ok) throw new Error("ไม่พบข้อสอบสำหรับเอกสารนี้");
         return res.json();
@@ -59,7 +59,7 @@ export default function StudentQuizPage() {
     const currentQ = questions[currentIndex];
 
     try {
-      const res = await fetch(`http://localhost:8000/assessment/${documentId}/questions/${currentQ.question_id}/submit`, {
+      const res = await fetch(`http://localhost:8000/api/v1/student/assessment/${documentId}/questions/${currentQ.question_id}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ selected_key: selectedKey }),

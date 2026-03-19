@@ -14,7 +14,6 @@ from app.core.config import Settings
 from app.services.core.extractors.txt_extractor import TxtExtractor
 from app.services.core.extractors.pdf_extractor import PDFExtractor
 from app.services.core.extractors.docx_extractor import DocxExtractor
-from app.services.core.extractors.image_extractor import ImageExtractor
 
 
 class DocumentService:
@@ -28,10 +27,6 @@ class DocumentService:
             ".txt": TxtExtractor(),
             ".pdf": PDFExtractor(),
             ".docx": DocxExtractor(),
-            ".jpg": ImageExtractor(),
-            ".jpeg": ImageExtractor(),
-            ".png": ImageExtractor(),
-            ".webp": ImageExtractor(),
         }
 
     def _get_document_path(self, document_id: str) -> Path:

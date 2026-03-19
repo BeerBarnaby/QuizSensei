@@ -22,12 +22,7 @@ class Settings(BaseSettings):
     # Maximum file size in bytes (default: 20 MB)
     MAX_FILE_SIZE_BYTES: int = 20 * 1024 * 1024
     # Allowed MIME types (enforced alongside extension check)
-    ALLOWED_EXTENSIONS: Set[str] = {".pdf", ".txt", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".webp"}
-
-    # ── OCR & Universal Support ───────────────────────────────────────────
-    OCR_MIN_TEXT_LENGTH: int = 200  # Threshold to trigger OCR if digital text is too short
-    TESSERACT_CMD: str = "tesseract"  # System command or path to tesseract
-    VISION_LLM_MODEL: str = "google/gemini-flash-1.5:free"  # Preferred model for Vision OCR
+    ALLOWED_EXTENSIONS: Set[str] = {".pdf", ".txt", ".docx"}
 
     # ── OpenRouter LLM ───────────────────────────────────────────────────
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
