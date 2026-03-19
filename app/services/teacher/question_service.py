@@ -6,7 +6,7 @@ Orchestrates Agent 2 (Generator) and Agent 3 (Auditor) pipeline.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import aiofiles
 from fastapi import HTTPException, status as fast_status
@@ -24,22 +24,55 @@ logger = logging.getLogger(__name__)
 class QuestionGenerationService:
     """Orchestrates Agent 2 → Agent 3 pipeline with auto-regeneration."""
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, document_service: Any = None):
         self.settings = settings
+        self.document_service = document_service
         self.generator = LLMQuestionGenerator(settings)
         self.auditor   = AuditorAgent(settings)
 
-    def _get_extracted_sidecar_path(self, document_id: str) -> Path:
-        safe_id = Path(document_id).name
-        return self.settings.EXTRACTED_DIR / f"{safe_id}.json"
+    async def _get_extracted_sidecar_path(self, document_id: str, db: Optional[AsyncSession] = None) -> Path:
+        return await self.document_service._get_sidecar_path(document_id, db=db)
 
-    def _get_analysis_sidecar_path(self, document_id: str) -> Path:
+    async def _get_analysis_sidecar_path(self, document_id: str, db: Optional[AsyncSession] = None) -> Path:
+        # We need a polymorphic check for analysis as well
         safe_id = Path(document_id).name
-        return self.settings.ANALYSIS_DIR / f"{safe_id}_analysis.json"
+        analysis_path = self.settings.ANALYSIS_DIR / f"{safe_id}_analysis.json"
+        if analysis_path.exists():
+            return analysis_path
+        if db:
+            try:
+                from sqlalchemy import select
+                from app.models.document import Document
+                import uuid
+                u = uuid.UUID(document_id)
+                res = await db.execute(select(Document).where(Document.id == u))
+                doc = res.scalar_one_or_none()
+                if doc:
+                    stem = Path(doc.storage_path).name
+                    alt = self.settings.ANALYSIS_DIR / f"{stem}_analysis.json"
+                    if alt.exists(): return alt
+            except Exception: pass
+        return analysis_path
 
-    def _get_questions_sidecar_path(self, document_id: str) -> Path:
+    async def _get_questions_sidecar_path(self, document_id: str, db: Optional[AsyncSession] = None) -> Path:
         safe_id = Path(document_id).name
-        return self.settings.QUESTIONS_DIR / f"{safe_id}_questions.json"
+        path = self.settings.QUESTIONS_DIR / f"{safe_id}_questions.json"
+        if path.exists():
+            return path
+        if db:
+            try:
+                from sqlalchemy import select
+                from app.models.document import Document
+                import uuid
+                u = uuid.UUID(document_id)
+                res = await db.execute(select(Document).where(Document.id == u))
+                doc = res.scalar_one_or_none()
+                if doc:
+                    stem = Path(doc.storage_path).name
+                    alt = self.settings.QUESTIONS_DIR / f"{stem}_questions.json"
+                    if alt.exists(): return alt
+            except Exception: pass
+        return path
 
     async def generate_questions(
         self,
@@ -53,11 +86,11 @@ class QuestionGenerationService:
           2. Agent 3 audits them.
           3. If any rejected, loop back and ask Agent 2 to replace them (up to max_retries).
         """
-        extracted_path = self._get_extracted_sidecar_path(document_id)
+        extracted_path = await self._get_extracted_sidecar_path(document_id, db=db)
         if not extracted_path.exists():
             raise HTTPException(status_code=404, detail="Extraction data not found. Run /extract first.")
 
-        analysis_path = self._get_analysis_sidecar_path(document_id)
+        analysis_path = await self._get_analysis_sidecar_path(document_id, db=db)
         if not analysis_path.exists():
             raise HTTPException(status_code=404, detail="Analysis data not found. Run /analyze first.")
 
@@ -168,7 +201,7 @@ class QuestionGenerationService:
         }
 
         # ── Persist sidecar JSON ─────────────────────────
-        questions_path = self._get_questions_sidecar_path(document_id)
+        questions_path = await self._get_questions_sidecar_path(document_id, db=db)
         async with aiofiles.open(questions_path, "w", encoding="utf-8") as f:
             await f.write(json.dumps(result, ensure_ascii=False, indent=2))
 
@@ -196,17 +229,17 @@ class QuestionGenerationService:
 
         return result
 
-    async def get_document_questions(self, document_id: str) -> Dict[str, Any]:
+    async def get_document_questions(self, document_id: str, db: Optional[AsyncSession] = None) -> Dict[str, Any]:
         """Retrieves the saved questions sidecar."""
-        path = self._get_questions_sidecar_path(document_id)
+        path = await self._get_questions_sidecar_path(document_id, db=db)
         if not path.exists():
             raise HTTPException(status_code=404, detail="Questions not found.")
         async with aiofiles.open(path, "r", encoding="utf-8") as f:
             return json.loads(await f.read())
 
-    async def get_question_by_id(self, document_id: str, question_id: str) -> Dict[str, Any]:
-        """Retrieves a specific question from the sidecar."""
-        full = await self.get_document_questions(document_id)
+    async def get_question_by_id(self, document_id: str, question_id: str, db: Optional[AsyncSession] = None) -> Dict[str, Any]:
+        """Retrieves a specific question from the sidecar using polymorphic resolution."""
+        full = await self.get_document_questions(document_id, db=db)
         for list_name in ["questions", "rejected_questions", "pending_questions"]:
             for q in full.get(list_name, []):
                 if q.get("question_id") == question_id:

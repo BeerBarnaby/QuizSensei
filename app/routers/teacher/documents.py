@@ -29,12 +29,18 @@ def get_document_service(settings: Settings = Depends(get_settings)) -> Document
     return DocumentService(settings)
 
 # FastAPI dependency to inject AnalysisService
-def get_analysis_service(settings: Settings = Depends(get_settings)) -> AnalysisService:
-    return AnalysisService(settings)
+def get_analysis_service(
+    settings: Settings = Depends(get_settings),
+    document_service: DocumentService = Depends(get_document_service)
+) -> AnalysisService:
+    return AnalysisService(settings, document_service)
 
 # FastAPI dependency to inject QuestionGenerationService
-def get_question_service(settings: Settings = Depends(get_settings)) -> QuestionGenerationService:
-    return QuestionGenerationService(settings)
+def get_question_service(
+    settings: Settings = Depends(get_settings),
+    document_service: DocumentService = Depends(get_document_service)
+) -> QuestionGenerationService:
+    return QuestionGenerationService(settings, document_service)
 
 router = APIRouter(tags=["documents"])
 
@@ -251,8 +257,9 @@ async def update_document_content(
 async def get_document_metadata(
     document_id: str,
     document_service: DocumentService = Depends(get_document_service),
+    db: AsyncSession = Depends(get_db_session),
 ) -> dict:
-    return await document_service.get_document_metadata(document_id)
+    return await document_service.get_document_metadata(document_id, db=db)
 
 
 @router.get(
@@ -264,8 +271,9 @@ async def get_document_metadata(
 async def get_document_preview(
     document_id: str,
     document_service: DocumentService = Depends(get_document_service),
+    db: AsyncSession = Depends(get_db_session),
 ) -> dict:
-    return await document_service.get_document_preview(document_id)
+    return await document_service.get_document_preview(document_id, db=db)
 
 
 @router.get(
@@ -277,8 +285,9 @@ async def get_document_preview(
 async def get_document_content(
     document_id: str,
     document_service: DocumentService = Depends(get_document_service),
+    db: AsyncSession = Depends(get_db_session),
 ) -> dict:
-    return await document_service.get_document_content(document_id)
+    return await document_service.get_document_content(document_id, db=db)
 
 
 # ---------------------------------------------------------------------------
@@ -311,8 +320,9 @@ async def analyze_document(
 async def get_document_analysis(
     document_id: str,
     analysis_service: AnalysisService = Depends(get_analysis_service),
+    db: AsyncSession = Depends(get_db_session),
 ) -> dict:
-    return await analysis_service.get_document_analysis(document_id)
+    return await analysis_service.get_document_analysis(document_id, db=db)
 
 
 # ---------------------------------------------------------------------------
@@ -346,8 +356,9 @@ async def generate_questions(
 async def get_document_questions(
     document_id: str,
     question_service: QuestionGenerationService = Depends(get_question_service),
+    db: AsyncSession = Depends(get_db_session),
 ) -> dict:
-    return await question_service.get_document_questions(document_id)
+    return await question_service.get_document_questions(document_id, db=db)
 
 
 @router.get(
@@ -360,7 +371,8 @@ async def get_question(
     document_id: str,
     question_id: str,
     question_service: QuestionGenerationService = Depends(get_question_service),
+    db: AsyncSession = Depends(get_db_session),
 ) -> dict:
-    return await question_service.get_question_by_id(document_id, question_id)
+    return await question_service.get_question_by_id(document_id, question_id, db=db)
 
 

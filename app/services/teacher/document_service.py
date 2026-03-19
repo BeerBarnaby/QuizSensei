@@ -38,15 +38,42 @@ class DocumentService:
         safe_id = Path(document_id).name
         return self.settings.UPLOAD_DIR / safe_id
 
-    def _get_sidecar_path(self, document_id: str) -> Path:
-        """Returns the path where the JSON extraction result will be stored."""
+    async def _get_sidecar_path(self, document_id: str, db: Optional[AsyncSession] = None) -> Path:
+        """
+        Returns the path where the JSON extraction result is stored.
+        Polymorphic: supports both UUID and filename-based sidecars.
+        """
+        # 1. Try direct check (document_id as filename stem)
         safe_id = Path(document_id).name
         sidecar_path = self.settings.EXTRACTED_DIR / f"{safe_id}.json"
         
-        # Log path for troubleshooting 404
-        from app.core.llm import logger
-        logger.info(f"Checking sidecar path: {sidecar_path} (exists: {sidecar_path.exists()})")
-        
+        if sidecar_path.exists():
+            return sidecar_path
+            
+        # 2. If not found and db is provided, try resolving UUID to filename
+        if db:
+            try:
+                # Attempt to parse target_uuid
+                from sqlalchemy import select
+                from app.models.document import Document
+                import uuid
+                
+                try:
+                    u = uuid.UUID(document_id)
+                    query = select(Document).where(Document.id == u)
+                    res = await db.execute(query)
+                    doc = res.scalar_one_or_none()
+                    if doc:
+                        # storage_path is something like 'uploads/dcf592ba_document.txt'
+                        filename_stem = Path(doc.storage_path).name
+                        alt_path = self.settings.EXTRACTED_DIR / f"{filename_stem}.json"
+                        if alt_path.exists():
+                            return alt_path
+                except ValueError:
+                    pass # Not a UUID
+            except Exception:
+                pass
+
         return sidecar_path
 
     async def extract_document(self, document_id: str, db: Optional[AsyncSession] = None) -> Dict[str, Any]:
@@ -104,7 +131,7 @@ class DocumentService:
             )
 
         # Persist sidecar JSON
-        sidecar_path = self._get_sidecar_path(document_id)
+        sidecar_path = await self._get_sidecar_path(document_id, db=db)
         
         async with aiofiles.open(sidecar_path, "w", encoding="utf-8") as f:
             await f.write(json.dumps(result, ensure_ascii=False, indent=2))
@@ -153,7 +180,7 @@ class DocumentService:
             "extracted_text": None,
             "message": message
         }
-        sidecar_path = self._get_sidecar_path(document_id)
+        sidecar_path = await self._get_sidecar_path(document_id)
         async with aiofiles.open(sidecar_path, "w", encoding="utf-8") as f:
             await f.write(json.dumps(result, indent=2))
         return self._strip_text(result)
@@ -164,9 +191,9 @@ class DocumentService:
         metadata.pop("extracted_text", None)
         return metadata
 
-    async def get_document_content(self, document_id: str) -> Dict[str, Any]:
+    async def get_document_content(self, document_id: str, db: Optional[AsyncSession] = None) -> Dict[str, Any]:
         """Returns the full JSON containing metadata and all extracted_text."""
-        sidecar_path = self._get_sidecar_path(document_id)
+        sidecar_path = await self._get_sidecar_path(document_id, db=db)
         if not sidecar_path.exists():
             from app.core.llm import logger
             logger.error(f"Sidecar file NOT FOUND: {sidecar_path}")
@@ -179,9 +206,9 @@ class DocumentService:
             content = await f.read()
             return json.loads(content)
 
-    async def get_document_preview(self, document_id: str, max_chars: int = 500) -> Dict[str, Any]:
+    async def get_document_preview(self, document_id: str, max_chars: int = 500, db: Optional[AsyncSession] = None) -> Dict[str, Any]:
         """Returns metadata + a truncated preview snippet of the extracted_text."""
-        full_content = await self.get_document_content(document_id)
+        full_content = await self.get_document_content(document_id, db=db)
         
         preview_text = None
         if full_content.get("extracted_text"):
@@ -199,9 +226,9 @@ class DocumentService:
             "message": full_content["message"]
         }
 
-    async def get_document_metadata(self, document_id: str) -> Dict[str, Any]:
+    async def get_document_metadata(self, document_id: str, db: Optional[AsyncSession] = None) -> Dict[str, Any]:
         """Returns just the metadata stats of a past extraction."""
-        full_content = await self.get_document_content(document_id)
+        full_content = await self.get_document_content(document_id, db=db)
         return self._strip_text(full_content)
 
     async def delete_document(self, document_id: str) -> Dict[str, str]:
@@ -213,7 +240,7 @@ class DocumentService:
         
         # Paths to specific user files
         doc_path = self._get_document_path(safe_id)
-        extraction_path = self._get_sidecar_path(safe_id)
+        extraction_path = await self._get_sidecar_path(safe_id)
         analysis_path = self.settings.ANALYSIS_DIR / f"{safe_id}_analysis.json"
         questions_path = self.settings.QUESTIONS_DIR / f"{safe_id}_questions.json"
         

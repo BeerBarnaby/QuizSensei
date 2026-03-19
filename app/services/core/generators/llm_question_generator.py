@@ -160,7 +160,8 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
                 call_openrouter_json,
                 prompt=full_prompt,
                 model=self.model,
-                temperature=0.7
+                temperature=0.7,
+                max_tokens=10000
             )
             
             if not questions:

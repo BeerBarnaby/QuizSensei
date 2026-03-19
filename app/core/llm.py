@@ -64,6 +64,10 @@ def call_openrouter_text(
         "max_tokens": max_tokens
     }
 
+    logger.info(f"--- LLM REQUEST (TEXT) ---")
+    logger.info(f"MODEL: {target_model}")
+    logger.info(f"PROMPT (first 250 characters): {prompt[:250]}...")
+
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=120)
         if response.status_code != 200:
@@ -77,9 +81,15 @@ def call_openrouter_text(
                 logger.error(f"LLM Provider Error: {choice['error']}")
                 return None
             if "message" in choice and "content" in choice["message"]:
-                return choice["message"]["content"].strip()
+                content = choice["message"]["content"].strip()
+                logger.info(f"--- LLM RESPONSE (TEXT) RECEIVED ---")
+                logger.info(f"CONTENT (first 250 characters): {content[:250]}...")
+                return content
             if "text" in choice:
-                return choice["text"].strip()
+                content = choice["text"].strip()
+                logger.info(f"--- LLM RESPONSE (TEXT) RECEIVED ---")
+                logger.info(f"CONTENT (first 250 characters): {content[:250]}...")
+                return content
         
         logger.error(f"LLM API returned no choices: {result}")
         return None
@@ -91,7 +101,7 @@ def call_openrouter_json(
     prompt: str,
     model: Optional[str] = None,
     temperature: float = 0.1,
-    max_tokens: int = 4000
+    max_tokens: int = 8000
 ) -> Optional[Union[Dict[str, Any], List[Any]]]:
     """
     Calls LLM with JSON mode enabled via response_format. 
@@ -122,6 +132,10 @@ def call_openrouter_json(
         "response_format": {"type": "json_object"}
     }
 
+    logger.info(f"--- LLM REQUEST (JSON MODE) ---")
+    logger.info(f"MODEL: {target_model}")
+    logger.info(f"PROMPT (first 250 characters): {json_prompt[:250]}...")
+
     try:
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=120)
         if response.status_code != 200:
@@ -145,21 +159,55 @@ def call_openrouter_json(
             return None
 
         cleaned = clean_json_string(raw)
+        logger.info(f"--- LLM RESPONSE (JSON) RECEIVED ---")
+        logger.info(f"CLEANED CONTENT (first 250 characters): {cleaned[:250]}...")
+        
         try:
-            return json.loads(cleaned)
+            parsed = json.loads(cleaned)
+            logger.info(f"PARSED SUCCESS: Keys found: {list(parsed.keys()) if isinstance(parsed, dict) else 'List'}")
+            return parsed
         except Exception as e:
             logger.error(f"JSON Parse Error: {e}")
             logger.error(f"Raw Response: {raw}")
             
-            # Scavenging fallback
+            # ── Scavenging fallback with Heuristic Repair ──────────────────
             try:
+                # 1. Basic block extraction
                 start_idx = max(cleaned.find('['), cleaned.find('{'))
-                end_idx = max(cleaned.rfind(']'), cleaned.rfind('}'))
-                if start_idx != -1 and end_idx != -1:
-                    salvaged = cleaned[start_idx:end_idx+1]
-                    return json.loads(salvaged)
+                if start_idx == -1: return None
+                
+                salvaged = cleaned[start_idx:].strip()
+                
+                # 2. Heuristic repair for truncated JSON
+                # If it doesn't end correctly, try to close it
+                if not (salvaged.endswith('}') or salvaged.endswith(']')):
+                    # Try to close a dangling string if odd number of quotes
+                    if salvaged.count('"') % 2 != 0:
+                        salvaged += '"'
+                    
+                    # Naively close braces in reverse order
+                    # (Better than nothing for truncation)
+                    stack = []
+                    for char in salvaged:
+                        if char == '{': stack.append('}')
+                        elif char == '[': stack.append(']')
+                        elif char == '}' and stack and stack[-1] == '}': stack.pop()
+                        elif char == ']' and stack and stack[-1] == ']': stack.pop()
+                    
+                    while stack:
+                        salvaged += stack.pop()
+                
+                return json.loads(salvaged)
             except Exception:
-                pass
+                # One last attempt: find the last valid object in a list if it was a list
+                try:
+                    # If it's a truncated list, maybe we have at least one valid object
+                    if cleaned.strip().startswith('['):
+                        valid_part = cleaned[:cleaned.rfind('}')+1]
+                        if valid_part:
+                            if not valid_part.endswith(']'): valid_part += ']'
+                            return json.loads(valid_part)
+                except Exception: pass
             return None
             
     except Exception as e:

@@ -18,20 +18,53 @@ from app.services.core.analyzers.llm_financial_literacy_analyzer import LLMFinan
 class AnalysisService:
     """Provides business logic for running analysis on extracted documents."""
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, document_service: Any = None):
         self.settings = settings
+        self.document_service = document_service
         # Swapped to LLM analyzer as requested
         self.analyzer = LLMFinancialLiteracyAnalyzer(settings)
 
-    def _get_extracted_sidecar_path(self, document_id: str) -> Path:
-        """Returns the path of the Phase 2 extraction JSON."""
-        safe_id = Path(document_id).name
-        return self.settings.EXTRACTED_DIR / f"{safe_id}.json"
+    async def _get_extracted_sidecar_path(self, document_id: str, db: Optional[AsyncSession] = None) -> Path:
+        """
+        Returns the path of the Phase 2 extraction JSON.
+        Uses DocumentService's polymorphic resolution.
+        """
+        return await self.document_service._get_sidecar_path(document_id, db=db)
 
-    def _get_analysis_sidecar_path(self, document_id: str) -> Path:
-        """Returns the path where the Phase 3 analysis JSON will be stored."""
+    async def _get_analysis_sidecar_path(self, document_id: str, db: Optional[AsyncSession] = None) -> Path:
+        """
+        Returns the path where the Phase 3 analysis JSON is stored.
+        Polymorphic: supports both UUID and filename-based sidecars.
+        """
+        # 1. Direct check
         safe_id = Path(document_id).name
-        return self.settings.ANALYSIS_DIR / f"{safe_id}_analysis.json"
+        analysis_path = self.settings.ANALYSIS_DIR / f"{safe_id}_analysis.json"
+        
+        if analysis_path.exists():
+            return analysis_path
+            
+        # 2. DB Resolve (UUID to Filename)
+        if db:
+            try:
+                from sqlalchemy import select
+                from app.models.document import Document
+                import uuid
+                try:
+                    u = uuid.UUID(document_id)
+                    query = select(Document).where(Document.id == u)
+                    res = await db.execute(query)
+                    doc = res.scalar_one_or_none()
+                    if doc:
+                        filename_stem = Path(doc.storage_path).name
+                        alt_path = self.settings.ANALYSIS_DIR / f"{filename_stem}_analysis.json"
+                        if alt_path.exists():
+                            return alt_path
+                except ValueError:
+                    pass
+            except Exception:
+                pass
+
+        return analysis_path
 
     async def analyze_document(self, document_id: str, db: Optional[Any] = None) -> Dict[str, Any]:
         """
@@ -42,7 +75,7 @@ class AnalysisService:
         from app.core.llm import logger
 
         # 1. Verify document has been extracted
-        extracted_path = self._get_extracted_sidecar_path(document_id)
+        extracted_path = await self._get_extracted_sidecar_path(document_id, db=db)
         if not extracted_path.exists():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -98,7 +131,7 @@ class AnalysisService:
             )
 
         # 5. Persist Analysis result
-        analysis_path = self._get_analysis_sidecar_path(document_id)
+        analysis_path = await self._get_analysis_sidecar_path(document_id, db=db)
 
         async with aiofiles.open(analysis_path, "w", encoding="utf-8") as f:
             await f.write(json.dumps(result, ensure_ascii=False, indent=2))
@@ -133,7 +166,7 @@ class AnalysisService:
 
         return result
 
-    async def _save_and_return_failed_status(self, document_id: str, filename: str, message: str) -> Dict[str, Any]:
+    async def _save_and_return_failed_status(self, document_id: str, filename: str, message: str, db: Optional[AsyncSession] = None) -> Dict[str, Any]:
         """Helper to safely format and persist a failed analysis state."""
         result = {
             "document_id": document_id,
@@ -154,16 +187,16 @@ class AnalysisService:
             "analyzed_char_count": 0,
         }
         
-        analysis_path = self._get_analysis_sidecar_path(document_id)
+        analysis_path = await self._get_analysis_sidecar_path(document_id, db=db)
         
         async with aiofiles.open(analysis_path, "w", encoding="utf-8") as f:
             await f.write(json.dumps(result, ensure_ascii=False, indent=2))
             
         return result
 
-    async def get_document_analysis(self, document_id: str) -> Dict[str, Any]:
-        """Retrieves an existing analysis sidecar file."""
-        analysis_path = self._get_analysis_sidecar_path(document_id)
+    async def get_document_analysis(self, document_id: str, db: Optional[AsyncSession] = None) -> Dict[str, Any]:
+        """Retrieves an existing analysis sidecar file using polymorphic resolution."""
+        analysis_path = await self._get_analysis_sidecar_path(document_id, db=db)
         if not analysis_path.exists():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
