@@ -132,8 +132,8 @@ class QuestionGenerationService:
                 break
 
             try:
-                # Agent 3 (Auditor) verifies if the drafts meet quality standards
-                audited = await self.auditor.audit(raw_drafts, audience, difficulty)
+                # Agent 3 (Auditor) verifies if the drafts meet quality standards against the original text
+                audited = await self.auditor.audit(raw_drafts, audience, difficulty, text)
             except Exception as e:
                 logger.error(f"Audit fail: {e}")
                 # If audit fails, we keep the drafts but they remain 'pending'

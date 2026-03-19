@@ -1,16 +1,30 @@
-# React + Vite
+# QuizSensei - Frontend Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This directory contains the **Next.js (App Router)** frontend for QuizSensei.
 
-Currently, two official plugins are available:
+## Tech Stack
+- **Framework:** Next.js 15+ (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS v4
+- **State Management:** Zustand
+- **Icons:** Heroicons
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
+- **3-Panel Notebook View:** Designed similarly to NotebookLM, split into.
+  1. **SourceList (Left Panel):** File upload and document management.
+  2. **SourceViewer (Center Panel):** Reading extracted text and Gatekeeper (Agent 1) analysis.
+  3. **QuizGenerator (Right Panel):** Requesting and viewing generated exams from Agent 2/3.
 
-## React Compiler
+## Environment Variables
+The frontend communicates directly with the FastAPI backend. By default, API calls point to `http://localhost:8000`. 
+Ensure your backend is running before using the UI.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Local Development
+```bash
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Docker Build
+This frontend is configured with `output: "standalone"` in `next.config.ts`.
+It is automatically built and served via the root `docker-compose.yml` file.

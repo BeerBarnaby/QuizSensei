@@ -2,89 +2,62 @@
 
 **AI-Driven Diagnostic Assessment Platform for Financial Literacy**
 
-QuizSensei เป็นแพลตฟอร์ม Backend อัจฉริยะที่ใช้ระบบ **Multi-Agent LLM Pipeline** ในการเปลี่ยนเอกสารความรู้ทางการเงิน (Financial Literacy) ให้กลายเป็นแบบทดสอบเชิงวินิจฉัย (Diagnostic Assessment) แบบอัตโนมัติ
+QuizSensei เป็นแพลตฟอร์มอัจฉริยะที่ใช้เทคโนโลยี **Multi-Agent LLM** เพื่อแปลงเอกสารความรู้ทางการเงิน (Financial Literacy) ให้เป็นแบบทดสอบเชิงวินิจฉัย (Diagnostic Assessment) แบบอัตโนมัติ พร้อมตรวจคำตอบและให้คำแนะนำแบบเฉพาะตัว (Personalized Coaching) โดยใช้หลักการ Zero-Hallucination
 
 ---
 
-## 1. โปรเจ็คนี้คืออะไร? (What is this project?)
-QuizSensei คือระบบนิเวศการเรียนรู้ที่ใช้พลังของ Generative AI ในการ:
-- **แสกนและวิเคราะห์เอกสาร:** รองรับทั้งไฟล์ Digital และเอกสารแสกนผ่านระบบ Universal OCR
-- **สร้างข้อสอบเชิงวินิจฉัย:** สร้างคำถามที่ไม่ได้แค่วัดความรู้ แต่สามารถระบุ "ความเข้าใจผิด" (Misconception) ของผู้เรียนได้ผ่านตัวเลือกที่ผิด (Distractors)
-- **ประเมินผลอัจฉริยะ:** ให้ Feedback แบบทันที (Zero-cost diagnostic) โดยอิงจากข้อมูลที่ AI วิเคราะห์ไว้ในขั้นตอนการสร้าง
+## 1. ฟีเจอร์หลัก (Key Features)
+
+- **📄 Document Upload & Extraction:** อัปโหลดและสกัดข้อความจากแหล่งข้อมูล (PDF, TXT, DOCX, Images)
+- **🤖 4-Agent Pipeline:**
+  - **Agent 1 (Gatekeeper & Analyzer):** ตรวจสอบว่าเอกสารมีความรู้เพียงพอต่อการออกข้อสอบหรือไม่ (Content Sufficiency) เเละระบุระดับผู้เรียนทั้ง 5 ระดับ (ประถม, มัธยมต้น, มัธยมปลาย, มหาวิทยาลัย, วัยทำงาน)
+  - **Agent 2 (Generator):** สร้างข้อสอบแบบปรนัย 4 ตัวเลือก โดยอิงจากเอกสาร 100% (Zero-hallucination) พร้อมสร้างตัวเลือกหลอก (Diagnostic Distractors) ที่สะท้อนความเข้าใจผิดที่พบได้บ่อย
+  - **Agent 3 (Auditor):** ตรวจทานข้อสอบกับต้นฉบับอย่างเข้มงวด หากเนื้อหาไม่ตรงจะยกเลิกและสั่งสร้างใหม่ทันที (Auto-Regeneration)
+  - **Agent 4 (Grader & Coach):** ตรวจคำตอบของนักเรียนและให้คำอธิบายที่เข้าใจง่าย เพื่อชี้จุดที่เข้าใจผิด
+- **💻 Modern Next.js Interface:** หน้าบ้านรูปแบบ 3 คอลัมน์ (NotebookLM-style) ที่ใช้งานง่าย รวดเร็ว และรองรับภาษาไทยเต็มรูปแบบ
 
 ---
 
-## 2. รันยังไง? (How to run it?)
+## 2. วิธีการติดตั้งและรันโปรเจกต์ (Installation & Setup)
 
-### วิธีที่ 1: Docker Compose (แนะนำ)
-ต้องการเพียง Docker และ Docker Desktop ในเครื่อง:
-1.  `.env` และใส่ API Key จาก **OpenRouter**
-2.  เปิด Terminal ในโฟลเดอร์โปรเจ็คแล้วรัน:
-    ```bash
-    docker-compose up --build
-    ```
-3.  Backend จะรันที่ `http://localhost:8000`
+### วิธีที่ 1: รันผ่าน Docker Compose (แนะนำ)
+รันทั้ง Backend (FastAPI), Frontend (Next.js), Database (Postgres) และ Cache (Redis) ในคำสั่งเดียว
+1. สร้างไฟล์ `.env` ในโฟลเดอร์หลัก และกำหนดค่า API Key:
+   ```env
+   OPENROUTER_API_KEY=your_key_here
+   OPENROUTER_MODEL=google/gemini-2.5-flash
+   ```
+2. รันคำสั่ง Docker:
+   ```bash
+   docker-compose up --build
+   ```
+3. เข้าใช้งานระบบ:
+   - **Frontend:** http://localhost:3000
+   - **Backend API Docs:** http://localhost:8000/docs
 
-### วิธีที่ 2: รันแบบ Manual (สำหรับ Development)
-1.  ติดตั้ง Python 3.12+
-2.  ติดตั้ง Tesseract OCR ในเครื่อง (ถ้าต้องการใช้ Local OCR)
-3.  ติดตั้ง Dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-4.  ตั้งค่า `.env` ให้ครบถ้วน
-5.  รันด้วย Uvicorn:
-    ```bash
-    python main.py
-    ```
+### วิธีที่ 2: รันแยกส่วนสำหรับการพัฒนา (Manual Development)
 
----
+**Backend (FastAPI):**
+```bash
+python -m venv venv
+venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
 
-## 3. โครงสร้างเป็นยังไง? (Structure)
-โปรเจ็คถูกออกแบบให้แยกส่วน (Decoupled) อย่างชัดเจนตามรูปแบบ Service-Oriented Architecture:
-
-```text
-Nectec26/
-├── app/
-│   ├── core/           # หัวใจของระบบ (Config, LLM Wrapper, DB Session)
-│   ├── models/         # SQLAlchemy Database Models (Postgres)
-│   ├── schemas/        # Pydantic Schemas สำหรับ Input/Output API
-│   ├── services/       # Business Logic หลัก
-│   │   ├── agents/     # Multi-Agent Pipeline (Auditor, Grader)
-│   │   ├── analyzers/  # Agent 1: Analyzer
-│   │   ├── generators/ # Agent 2: Generator
-│   │   ├── extractors/ # 3-Tier OCR Engine (PDF, DOCX, Image)
-│   │   └── ocr_service.py
-│   ├── routers/        # API Endpoints (FastAPI)
-│   └── main.py         # จุดรันโปรแกรม
-└── uploads/            # พื้นที่เก็บไฟล์และ Sidecar JSON (Data Storage)
+**Frontend (Next.js):**
+```bash
+cd frontend
+npm install
+npm run dev
+# ทำงานที่พอร์ต 3000
 ```
 
 ---
 
-## 4. ใช้ Tech Stack อะไร? (Tech Stack)
-- **Language:** Python 3.12
-- **Framework:** FastAPI (High-performance API)
-- **Database:** PostgreSQL (Relational Data)
-- **Storage:** Local Filesystem (Sidecar JSON Strategy)
-- **AI/LLM:** OpenRouter API (Accessing Gemini Flash, StepFun, etc.)
-- **OCR:** 3-Tier Engine (Digital Extract + Vision LLM + Tesseract)
-- **Infrastructure:** Docker & Docker Compose
+## 3. โครงสร้างโปรเจกต์ (Project Architecture)
 
----
-
-## 5. Flow การทำงานหลักคืออะไร? (Main Workflow)
-
-ระบบทำงานประสานกันผ่าน **4-Agent Pipeline**:
-
-1.  **Phase 1: Extraction & OCR** -> อ่านไฟล์เอกสาร ถ้าเป็นภาพจะส่งให้ Vision LLM (Tier 2) หรือ Tesseract (Tier 3) พร้อมเกลาข้อความให้เป็น Markdown
-2.  **Phase 2: Analyzer (Agent 1)** -> วิเคราะห์เนื้อหาว่าเกี่ยวกับการเงินไหม เนื้อหาพอไหม และกลุ่มเป้าหมายคือใคร
-3.  **Phase 3: Generator & Auditor (Agent 2 & 3)** -> 
-    - **Generator:** สร้างข้อสอบตามทฤษฎี Bloom's Taxonomy พร้อมออกแบบตัวเลือกที่ผิดให้สอดคล้องกับพฤติกรรมผู้เรียน
-    - **Auditor:** ตรวจสอบคุณภาพ ถ้าไม่ผ่านระบบจะสร้างใหม่ทันที (Auto-Regeneration)
-4.  **Phase 4: Grader (Agent 4)** -> ระบบตรวจคำตอบแบบ Diagnostic ที่ไม่ต้องเรียก AI ซ้ำ ทำให้ประมวลผลได้เร็วและฟรี (Zero-cost)
-
----
-
-> [!NOTE]
-> ระบบนี้ถูกออกแบบมาเพื่อความ Robust และ Scalability โดยการใช้ไฟล์ JSON เป็น Sidecar เพื่อเก็บข้อมูลขนาดใหญ่และใช้ Database สำหรับส่วนที่ต้องการ Query รวดเร็ว
+- **`app/`**: Backend พัฒนาด้วย FastAPI ประกอบไปด้วย Core Logic, Models (SQLAlchemy), Schemas, Service classes สำหรับ Agents เเละเส้นทาง API (Routers)
+- **`frontend/`**: Frontend พัฒนาด้วย Next.js (App Router), Tailwind CSS v4, Zustand. มี Components หลักสำหรับระบบจัดการเอกสาร (SourceList, SourceViewer) เเละระบบสุ่มข้อสอบ (QuizGenerator)
+- **`uploads/`**: โฟลเดอร์เก็บเอกสารต้นฉบับเเละ JSON sidecars ที่เกี่ยวข้อง
+- **`docker-compose.yml`**: เซ็ตอัป Infrastructure โดยรวมพร้อม Database เเละ Next.js Standalone build

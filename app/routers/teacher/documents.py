@@ -79,21 +79,28 @@ def _safe_filename(original: str) -> str:
 @router.get(
     "/",
     summary="List all uploaded documents",
-    description="Returns metadata for all files currently present in the upload directory.",
+    description="Returns metadata for all files from the Postgres database.",
 )
 async def list_documents(
     settings: Settings = Depends(get_settings),
+    db: AsyncSession = Depends(get_db_session),
 ) -> list:
+    from sqlalchemy.future import select
+    from app.models.document import Document
+    
+    result = await db.execute(select(Document).order_by(Document.uploaded_at.desc()))
+    db_docs = result.scalars().all()
+    
     docs = []
-    for f in settings.UPLOAD_DIR.iterdir():
-        if f.is_file():
-            docs.append({
-                "document_id": f.name,
-                "filename": f.name,
-                "size_bytes": f.stat().st_size,
-                "extension": f.suffix.lower(),
-            })
-    docs.sort(key=lambda x: x["document_id"])
+    for d in db_docs:
+        docs.append({
+            "id": str(d.id),
+            "document_id": str(d.id), # Fallback for old clients
+            "filename": d.filename,
+            "size_bytes": d.file_size_bytes,
+            "extension": f".{d.file_type}",
+            "extraction_state": d.extraction_state,
+        })
     return docs
 
 
@@ -104,15 +111,17 @@ async def list_documents(
     summary="Upload a document",
     description=(
         "Upload a document (PDF, TXT, DOC, DOCX). "
-        "The file is saved to the configured upload directory. "
-        "Max file size is controlled by `MAX_FILE_SIZE_BYTES` in settings."
+        "The file is saved to the configured upload directory and registered in the database."
     ),
 )
 async def upload_document(
     file: UploadFile = File(..., description="Document file to upload."),
     target_audience_level: str | None = Form(None, description="Target education level of the audience."),
     settings: Settings = Depends(get_settings),
+    db: AsyncSession = Depends(get_db_session),
 ) -> DocumentUploadResponse:
+    from app.models.document import Document
+
     # ── 1. Extension validation ────────────────────────────────────────────
     ext = _validate_extension(file.filename or "", settings.ALLOWED_EXTENSIONS)
 
@@ -143,15 +152,29 @@ async def upload_document(
     async with aiofiles.open(dest_path, "wb") as out_file:
         await out_file.write(content)
 
+    # ── 3.5. Insert into Database ──────────────────────────────────────────
+    db_doc = Document(
+        filename=file.filename or "unknown",
+        file_type=ext.replace(".", ""),
+        file_size_bytes=size_bytes,
+        storage_path=str(dest_path),
+        extraction_state="uploaded"
+    )
+    db.add(db_doc)
+    await db.commit()
+    await db.refresh(db_doc)
+
     # ── 4. Return structured response ──────────────────────────────────────
     return DocumentUploadResponse(
-        filename=file.filename or "unknown",
+        filename=db_doc.filename,
         saved_as=saved_name,
-        size_bytes=size_bytes,
+        size_bytes=db_doc.file_size_bytes,
         extension=ext,
-        upload_path=str(dest_path),
+        upload_path=db_doc.storage_path,
         target_audience_level=target_audience_level,
-        uploaded_at=datetime.now(timezone.utc),
+        uploaded_at=db_doc.uploaded_at,
+        # We also need to return the UUID as the new primary document_id if the frontend uses it.
+        # But for backward compatibility with the current models, we return it in standard fields if possible.
     )
 
 

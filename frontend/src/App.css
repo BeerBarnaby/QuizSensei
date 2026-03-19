@@ -1,6 +1,0 @@
-/* App.css can remain minimal for now as most styles are in index.css */
-.document-preview {
-  max-width: 800px;
-  margin: 0 auto;
-  color: var(--text-secondary);
-}

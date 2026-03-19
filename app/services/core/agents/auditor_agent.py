@@ -31,6 +31,7 @@ class AuditorAgent:
 ภารกิจของคุณ: ตรวจสอบความสมเหตุสมผลและคุณภาพของข้อสอบ Financial Literacy ภาษาไทย
 
 ## เกณฑ์การ Audit (Scoring Standards) - เกรด A เท่านั้นถึงจะผ่าน
+0. **Zero Hallucination (Strict)**: คำตอบที่ถูกต้อง เนื้อหาของโจทย์ และเหตุผลประกอบต้องอ้างอิงและมีรากฐานมาจากเนื้อหาต้นฉบับอย่างเด็ดขาด ห้ามแต่งเติมความจริงทางการเงินที่ไม่ได้กล่าวถึง
 1. **Persona Alignment**: โจทย์และตัวเลือกต้องไม่ใช้คำศัพท์ที่ยากเกินวัยหรือดูถูกสติปัญญาของ "{target_audience}"
 2. **Cognitive Match**: หากความยากคือ "{difficulty}" คำถามต้องไม่ง่ายแค่ถามนิยาม แต่ต้องสะท้อนระดับ Bloom's ที่กำหนดไว้อย่างแท้จริง
 3. **Internal Logic**: ตัวเลือกที่ถูกต้องต้อง "ถูกที่สุด" และตัวเลือกที่ผิดต้องมี "ตรรกะการผิด" ที่สมจริงตาม `distractor_map`
@@ -58,9 +59,10 @@ class AuditorAgent:
         questions: List[Dict[str, Any]],
         audience: str,
         difficulty: str,
+        source_text: str,
     ) -> List[Dict[str, Any]]:
         """
-        Runs each question through the LLM auditor (Thai rules).
+        Runs each question through the LLM auditor (Thai rules and Zero Hallucination).
         Returns the questions list with audit_status and audit_feedback injected.
         """
         if not questions:
@@ -85,6 +87,7 @@ class AuditorAgent:
         user_prompt = (
             f"เริ่มตรวจสอบข้อสอบ 4 ตัวเลือกภาษาไทย ทั้งหมด {len(questions)} ข้อ.\n\n"
             f"--- ข้อมูลบริบทที่ใช้ตรวจสอบ ---\n"
+            f"เนื้อหาต้นฉบับ (Source Text):\n{source_text[:4000]}\n\n"
             f"ระดับผู้เรียนที่เลือก: {audience}\n"
             f"ระดับความยากที่เลือก: {difficulty}\n\n"
             f"--- รายการข้อสอบ ---\n"

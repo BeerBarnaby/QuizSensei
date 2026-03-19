@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 class DocumentUploadResponse(BaseModel):
     """Returned after a successful file upload."""
 
+    id: str | None = Field(None, description="The Postgres UUID of the document.")
     filename: str = Field(..., description="Original filename as uploaded by the client.")
     saved_as: str = Field(..., description="Filename stored on disk (may be sanitised/unique).")
     size_bytes: int = Field(..., description="Size of the uploaded file in bytes.")
