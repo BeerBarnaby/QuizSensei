@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.config import Settings
-from app.models.database_models import QuestionRecord
+from app.models.database_models import QuestionRecord, AnswerAttempt
 from app.services.core.agents.grader_agent import GraderAgent
 
 logger = logging.getLogger(__name__)
@@ -93,5 +93,15 @@ class AssessmentService:
 
         # 2. Grade using the Agent 4 (Grader)
         grader_output = self.grader.grade(payload, selected_key)
+
+        # 3. Store the attempt in the database
+        attempt = AnswerAttempt(
+            question_id=question_id,
+            user_id="anonymous_student",
+            selected_choice_key=selected_key,
+            is_correct=1 if grader_output.is_correct else 0
+        )
+        db.add(attempt)
+        await db.commit()
         
         return grader_output.model_dump()
