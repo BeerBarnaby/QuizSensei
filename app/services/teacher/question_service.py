@@ -153,6 +153,11 @@ class QuestionGenerationService:
         # questions that have been officially APPROVED by Agent 3 (Auditor).
         while len(approved_questions) < target_amount and attempts < max_attempts:
             needed = target_amount - len(approved_questions)
+            # ── HARDENING: CAP BATCH SIZE ────────────────────────────────
+            # To avoid LLM output truncation (especially in Thai), we cap each 
+            # request to 3 questions. The loop will naturally refill until target_amount.
+            if needed > 3:
+                needed = 3
             logger.info(f"Loop {attempts+1}/{max_attempts}: Generating {needed} questions...")
             
             # Request only the missing delta from Agent 2

@@ -41,6 +41,7 @@ def call_openrouter_text(
     """
     Centralized utility to call OpenRouter API with key rotation and standard headers.
     """
+    
     settings = get_settings()
     api_key = get_llm_api_key()
     if not api_key or api_key == "dummy":
@@ -129,7 +130,7 @@ def call_openrouter_json(
         "messages": [{"role": "user", "content": json_prompt}],
         "temperature": temperature,
         "max_tokens": max_tokens,
-        "response_format": {"type": "json_object"}
+        # "response_format": {"type": "json_object"} # Disabled for compatibility
     }
 
     logger.info(f"--- LLM REQUEST (JSON MODE) ---")
@@ -178,15 +179,21 @@ def call_openrouter_json(
                 
                 salvaged = cleaned[start_idx:].strip()
                 
-                # 2. Heuristic repair for truncated JSON
-                # If it doesn't end correctly, try to close it
+                # ── Heuristic repair for truncated JSON ─────────────────────
                 if not (salvaged.endswith('}') or salvaged.endswith(']')):
-                    # Try to close a dangling string if odd number of quotes
+                    # 1. Truncated LIST special case (most common for questions)
+                    if salvaged.startswith('['):
+                        last_obj_end = salvaged.rfind('}')
+                        if last_obj_end != -1:
+                            salvaged = salvaged[:last_obj_end+1] + ']'
+                            try:
+                                return json.loads(salvaged)
+                            except Exception: pass
+                            
+                    # 2. General Case: Close dangling string and braces
                     if salvaged.count('"') % 2 != 0:
                         salvaged += '"'
                     
-                    # Naively close braces in reverse order
-                    # (Better than nothing for truncation)
                     stack = []
                     for char in salvaged:
                         if char == '{': stack.append('}')
@@ -199,15 +206,7 @@ def call_openrouter_json(
                 
                 return json.loads(salvaged)
             except Exception:
-                # One last attempt: find the last valid object in a list if it was a list
-                try:
-                    # If it's a truncated list, maybe we have at least one valid object
-                    if cleaned.strip().startswith('['):
-                        valid_part = cleaned[:cleaned.rfind('}')+1]
-                        if valid_part:
-                            if not valid_part.endswith(']'): valid_part += ']'
-                            return json.loads(valid_part)
-                except Exception: pass
+                pass
             return None
             
     except Exception as e:
