@@ -21,8 +21,8 @@ class QuestionGenerationRequest(BaseModel):
         description="Target audience: 'ประถม', 'มัธยมต้น', 'มัธยมปลาย', 'มหาวิทยาลัย', 'วัยทำงาน'"
     )
     difficulty_filter: Optional[str] = Field(None, description="ง่าย | ปานกลาง | ยาก")
-    topic_filter: Optional[str] = Field(None, description="Force a specific FL topic.")
-    subtopic_filter: Optional[str] = Field(None, description="Force a specific FL subtopic.")
+    topic_filter: Optional[str] = Field(None, description="Force a specific topic.")
+    subtopic_filter: Optional[str] = Field(None, description="Force a specific subtopic.")
     additional_document_ids: List[str] = Field(
         default_factory=list,
         description="Extra document IDs whose extracted text will be merged with the primary document."
@@ -52,7 +52,7 @@ class QuestionDraft(BaseModel):
     # ── Agent 2 deep justification ───────────────────────────────────────
     design_reasoning: Optional[str] = Field(
         None,
-        description="Agent 2: WHY this question is pedagogically needed for FL education."
+        description="Agent 2: WHY this question is pedagogically needed."
     )
     distractor_map: Optional[Dict[str, Any]] = Field(
         None,

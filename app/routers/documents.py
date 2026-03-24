@@ -299,7 +299,7 @@ async def get_document_content(
     response_model=AnalysisResultResponse,
     summary="Analyze extracted document",
     description=(
-        "Runs the rule-based Financial Literacy analyzer on previously extracted text. "
+        "Runs the AI-powered content analyzer on previously extracted text. "
         "Returns categorized topics, subtopics, difficulty rating, and learning objectives."
     ),
 )

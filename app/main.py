@@ -13,6 +13,7 @@ from app.core.config import get_settings
 from app.routers import documents, export
 from app.schemas.assessment.document import HealthResponse
 from app.db.session import engine, Base
+from app.db.redis import get_redis, close_redis
 
 settings = get_settings()
 
@@ -22,11 +23,17 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     settings.ensure_upload_dir()
     
-    # Initialize DB tables (for MVP, we use create_all instead of Alembic migrations)
+    # Initialize PostgreSQL tables (MVP uses create_all; switch to Alembic later)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        
+
+    # Warm up the Redis connection pool
+    await get_redis()
+
     yield
+
+    # Graceful shutdown
+    await close_redis()
 
 # ---------------------------------------------------------------------------
 # App factory

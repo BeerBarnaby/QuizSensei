@@ -1,11 +1,13 @@
-from typing import Any
-from sqlalchemy.orm import DeclarativeBase, declared_attr
+"""
+Declarative base class for all SQLAlchemy ORM models.
+Separated from session.py to prevent circular imports.
+"""
+from sqlalchemy.orm import DeclarativeBase
+
 
 class Base(DeclarativeBase):
-    id: Any
-    __name__: str
-
-    # Generate __tablename__ automatically from class name
-    @declared_attr
-    def __tablename__(cls) -> str:
-        return cls.__name__.lower()
+    """Base class for all database models.
+    
+    Models should define their own __tablename__ explicitly.
+    """
+    pass
