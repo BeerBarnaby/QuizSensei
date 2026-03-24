@@ -13,10 +13,10 @@ from fastapi import HTTPException, status as fast_status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
-from app.schemas.teacher.question import QuestionGenerationRequest
-from app.services.core.generators.llm_question_generator import LLMQuestionGenerator
-from app.services.core.agents.auditor_agent import AuditorAgent
-from app.models.database_models import QuestionRecord
+from app.schemas.assessment.question import QuestionGenerationRequest
+from app.services.generator_service import LLMQuestionGenerator
+from app.services.auditor_service import AuditorAgent
+from app.models.question import Question
 
 logger = logging.getLogger(__name__)
 
@@ -105,12 +105,12 @@ class QuestionGenerationService:
         # ── GATE: Content Sufficiency Check ────────────────────────────
         is_sufficient = analysis_data.get("content_sufficiency", False)
         if not is_sufficient and not request.additional_document_ids:
-            msg = analysis_data.get("sufficiency_reason", "เนื้อหาไม่เพียงพอที่จะสร้างข้อสอบได้")
-            rec = analysis_data.get("recommended_next_action", "กรุณาอัปโหลดเอกสารที่มีเนื้อหาทางการเงินดรายอื่นเพิ่มเติม")
+            msg = analysis_data.get("sufficiency_reason", "Insufficient content to generate questions.")
+            rec = analysis_data.get("recommended_next_action", "Please upload more relevant documents.")
             logger.warning(f"Generation blocked for {document_id}: {msg}")
             raise HTTPException(
                 status_code=fast_status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"ระบบหยุดการสร้างข้อสอบ: {msg} ({rec})"
+                detail=f"Generation blocked: {msg} ({rec})"
             )
 
         text = extraction_data.get("extracted_text", "")
@@ -124,15 +124,14 @@ class QuestionGenerationService:
                         extra_data = json.loads(await f.read())
                     extra_text = extra_data.get("extracted_text", "")
                     if extra_text:
-                        text += f"\n\n--- เอกสารเพิ่มเติม ({extra_id}) ---\n\n" + extra_text
+                        text += f"\n\n--- Additional Document ({extra_id}) ---\n\n" + extra_text
                         logger.info(f"Merged extra doc: {extra_id}")
                 except Exception as e:
                     logger.warning(f"Could not read extra doc {extra_id}: {e}")
 
         target_amount = request.number_of_questions
         audience = request.target_audience_level
-        audience = request.target_audience_level
-        difficulty = request.difficulty_filter or "ปานกลาง"
+        difficulty = request.difficulty_filter or "Medium"
 
         # ── Filter indicators if provided ──────────────────────────────
         all_indicators = analysis_data.get("indicators", [])
@@ -214,23 +213,20 @@ class QuestionGenerationService:
         from sqlalchemy import delete
         
         # 1. Purge old records for this document to ensure DB matches the latest sidecar
-        await db.execute(delete(QuestionRecord).where(QuestionRecord.document_id == document_id))
+        await db.execute(delete(Question).where(Question.quiz_id == document_id)) # Using document_id as proxy for now as per legacy logic
         
         # 2. Insert new approved records
         for q in approved_questions:
-            db_record = QuestionRecord(
+            db_record = Question(
                 id=q["question_id"],
-                document_id=document_id,
-                topic=q.get("topic", "unknown"),
-                subtopic=q.get("subtopic", "unknown"),
-                indicator_id=q.get("indicator_id"),
-                difficulty=q.get("difficulty", "unknown"),
-                payload=q,
+                quiz_id=None, # This needs a real Quiz ID in a proper system, but for now we fix the broken model usage
+                stem_th=q.get("stem_th", ""),
+                difficulty=q.get("difficulty", "medium"),
+                correct_answer_key=q.get("correct_answer_key", "A"),
             )
             db.add(db_record)
             
-        if approved_questions or True: # Always commit to confirm the purge even if 0 results
-            await db.commit()
+        await db.commit()
 
         return result
 

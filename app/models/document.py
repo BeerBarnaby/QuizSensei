@@ -9,7 +9,7 @@ from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey, BigI
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 
-from app.db.session import Base
+from app.db.base_class import Base
 
 
 class Document(Base):
@@ -20,7 +20,6 @@ class Document(Base):
     __tablename__ = "documents"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
     filename = Column(String(500), nullable=False)
     file_type = Column(String(20), nullable=False)  # pdf, docx, txt, image
     file_size_bytes = Column(BigInteger, nullable=False, default=0)
@@ -46,7 +45,6 @@ class Document(Base):
     approved_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user = relationship("User", back_populates="documents")
     sections = relationship("DocumentSection", back_populates="document", cascade="all, delete-orphan", lazy="selectin")
     sources = relationship("Source", secondary="source_documents", back_populates="documents")
 

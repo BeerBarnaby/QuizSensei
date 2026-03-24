@@ -10,9 +10,8 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
 from app.core.config import get_settings
-from app.routers.teacher import documents as teacher_docs, export as teacher_export
-from app.routers.student import assessment as student_assessment
-from app.schemas.teacher.document import HealthResponse
+from app.routers import documents, export
+from app.schemas.assessment.document import HealthResponse
 from app.db.session import engine, Base
 
 settings = get_settings()
@@ -64,9 +63,8 @@ app.add_middleware(
 
 
 # ── Routers ────────────────────────────────────────────────────────────────
-app.include_router(teacher_docs.router, prefix="/api/v1/teacher")
-app.include_router(teacher_export.router, prefix="/api/v1/teacher")
-app.include_router(student_assessment.router, prefix="/api/v1/student")
+app.include_router(documents.router, prefix="/api/v1")
+app.include_router(export.router, prefix="/api/v1")
 
 
 # ── Health check ──────────────────────────────────────────────────────────

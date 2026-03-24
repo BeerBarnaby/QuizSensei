@@ -11,18 +11,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.db.session import get_db_session
-from app.schemas.teacher.document import (
+from app.schemas.assessment.document import (
     DocumentUploadResponse,
     ExtractionMetadataResponse,
     ExtractionContentResponse,
     ExtractionPreviewResponse,
     BatchExtractionRequest
 )
-from app.schemas.teacher.analysis import AnalysisResultResponse
-from app.schemas.teacher.question import QuestionGenerationResponse, QuestionGenerationRequest, QuestionDraft
-from app.services.teacher.document_service import DocumentService
-from app.services.teacher.analysis_service import AnalysisService
-from app.services.teacher.question_service import QuestionGenerationService
+from app.schemas.assessment.analysis import AnalysisResultResponse
+from app.schemas.assessment.question import QuestionGenerationResponse, QuestionGenerationRequest, QuestionDraft
+from app.services.document_service import DocumentService
+from app.services.analysis_service import AnalysisService
+from app.services.question_service import QuestionGenerationService
 
 # FastAPI dependency to inject DocumentService
 def get_document_service(settings: Settings = Depends(get_settings)) -> DocumentService:

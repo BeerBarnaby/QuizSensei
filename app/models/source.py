@@ -9,7 +9,7 @@ from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, Foreign
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 
-from app.db.session import Base
+from app.db.base_class import Base
 
 
 # Many-to-many association table: Source <-> Document
@@ -29,7 +29,6 @@ class Source(Base):
     __tablename__ = "sources"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
     name = Column(String(500), nullable=False)
     state = Column(
         String(30), nullable=False, default="created"

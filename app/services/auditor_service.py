@@ -9,16 +9,16 @@ from typing import List, Dict, Any
 import httpx
 
 from app.core.config import Settings
+from app.core.ai_base import BaseAuditor
 
 logger = logging.getLogger(__name__)
 
 
-class AuditorAgent:
+class AuditorAgent(BaseAuditor):
     """
-    Agent 3 – ตรวจสอบคุณภาพข้อสอบทางการเงิน
-    ตรวจสอบว่าข้อสอบตรงกับ Target Audience, ระดับความยาก (Bloom's), 
-    และตัวเลือกผิดมีการให้เหตุผลที่สมเหตุสมผลหรือไม่
-    ห้ามปล่อยผ่านถ้าไม่ใช่ภาษาไทย หรือเหตุผลไม่ชัดเจน
+    Agent 3 – Automated Quality Auditor
+    Checks for compliance with target audience, cognitive depth (Bloom's),
+    and diagnostic rationale quality.
     """
 
     def __init__(self, settings: Settings):
@@ -28,7 +28,7 @@ class AuditorAgent:
     def _get_system_prompt(self, target_audience: str, difficulty: str) -> str:
         prompt = """คุณคือผู้ช่วยตรวจสอบข้อสอบ (Question Review Assistant)
 
-ภารกิจของคุณ: ตรวจสอบข้อสอบ Financial Literacy ภาษาไทย โดยเน้นการ "ปล่อยผ่าน (APPROVE)" เพื่อความรวดเร็ว
+ภารกิจของคุณ: ตรวจสอบข้อสอบ (Educational Assessment) ภาษาไทย โดยเน้นการ "ปล่อยผ่าน (APPROVE)" เพื่อความรวดเร็ว
 
 ## เกณฑ์การ Audit (Lenient Standards) - เน้นการให้โอกาสและปรับปรุงภายหลัง
 1. **General Alignment**: ตรวจสอบว่าโจทย์เกี่ยวข้องกับ "{{TARGET_AUDIENCE}}" และมีความยากใกล้เคียงกับ "{{DIFFICULTY}}" หรือไม่

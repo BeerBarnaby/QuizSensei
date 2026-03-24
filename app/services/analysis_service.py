@@ -13,7 +13,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
-from app.services.core.analyzers.llm_financial_literacy_analyzer import LLMFinancialLiteracyAnalyzer
+from app.services.analyzer_service import LLMDocumentAnalyzer
 
 class AnalysisService:
     """Provides business logic for running analysis on extracted documents."""
@@ -21,8 +21,8 @@ class AnalysisService:
     def __init__(self, settings: Settings, document_service: Any = None):
         self.settings = settings
         self.document_service = document_service
-        # Swapped to LLM analyzer as requested
-        self.analyzer = LLMFinancialLiteracyAnalyzer(settings)
+        # Swapped to generic LLM analyzer for domain-agnostic assessment
+        self.analyzer = LLMDocumentAnalyzer(settings)
 
     async def _get_extracted_sidecar_path(self, document_id: str, db: Optional[AsyncSession] = None) -> Path:
         """
@@ -119,7 +119,7 @@ class AnalysisService:
                 "should_upload_more_documents": analysis_dict.get("should_upload_more_documents", True),
                 "recommended_next_action": analysis_dict.get("recommended_next_action"),
                 "status": analysis_dict.get("status", "success"),
-                "message": analysis_dict.get("message", "วิเคราะห์สำเร็จ"),
+                "message": analysis_dict.get("message", "Analysis completed successfully."),
                 "keywords_found": analysis_dict.get("keywords_found", []),
                 "indicators": analysis_dict.get("indicators", []),
                 "analyzed_char_count": analysis_dict.get("analyzed_char_count", 0),
@@ -179,7 +179,7 @@ class AnalysisService:
             "content_sufficiency": False,
             "sufficiency_reason": message,
             "should_upload_more_documents": True,
-            "recommended_next_action": "กรุณาตรวจสอบเอกสารและอัปโหลดใหม่",
+            "recommended_next_action": "Please check the document and upload again.",
             "status": "failed",
             "message": message,
             "keywords_found": [],

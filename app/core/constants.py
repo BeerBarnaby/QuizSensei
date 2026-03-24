@@ -108,11 +108,5 @@ class AuditStatus(str, Enum):
 
 class UserRole(str, Enum):
     TEACHER = "teacher"
-    STUDENT = "student"
 
 
-# ── Attempt States ────────────────────────────────────────────────────────────
-
-class AttemptState(str, Enum):
-    IN_PROGRESS = "in_progress"
-    GRADED = "graded"

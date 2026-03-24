@@ -13,9 +13,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
-from app.services.core.extractors.txt_extractor import TxtExtractor
-from app.services.core.extractors.pdf_extractor import PDFExtractor
-from app.services.core.extractors.docx_extractor import DocxExtractor
+from app.services.extraction_service import ExtractionService
 
 
 class DocumentService:
@@ -24,12 +22,7 @@ class DocumentService:
     def __init__(self, settings: Settings):
         self.settings = settings
 
-        # Strategy map for extractors based on file extension
-        self.extractors = {
-            ".txt": TxtExtractor(),
-            ".pdf": PDFExtractor(),
-            ".docx": DocxExtractor(),
-        }
+        pass # Strategies now handled by ExtractionService factory
 
     def _get_document_path(self, document_id: str) -> Path:
         """Returns bounds-safe path to the uploaded document."""
@@ -97,22 +90,9 @@ class DocumentService:
 
         ext = doc_path.suffix.lower()
 
-        # Handle unsupported files gracefully without throwing 500s
-        if ext == ".doc":
-            return await self._save_and_return_failed_result(
-                document_id, ext, "Parsing not supported for .doc files yet."
-            )
-            
-        if ext not in self.extractors:
-            return await self._save_and_return_failed_result(
-                document_id, ext, f"No extractor available for {ext}."
-            )
-
-        extractor = self.extractors[ext]
-        
         try:
-            # Execute strategy
-            extracted_text = await extractor.extract_text(doc_path)
+            # Execute unified extraction
+            extracted_text = await ExtractionService.extract_text(doc_path)
             
             # Prepare result dictionary
             result = {

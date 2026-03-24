@@ -8,17 +8,17 @@ import logging
 from typing import List, Dict, Any
 
 from app.core.config import Settings
-from app.services.core.generators.base import BaseQuestionGenerator
-from app.schemas.teacher.question import QuestionGenerationRequest
+from app.core.ai_base import BaseQuestionGenerator
+from app.schemas.assessment.question import QuestionGenerationRequest
 
 logger = logging.getLogger(__name__)
 
 
 class LLMQuestionGenerator(BaseQuestionGenerator):
     """
-    Agent 2 – สร้างข้อสอบทางการเงินเป็นภาษาไทย
-    - รองรับ 5 กลุ่มเป้าหมาย
-    - แมปความยาก (ง่าย/ปานกลาง/ยาก) เป็น Bloom's Taxonomy
+    Agent 2 – Generates assessment questions in Thai
+    - Supports multiple educational levels
+    - Maps UI difficulty to Bloom's Taxonomy
     """
 
     def __init__(self, settings: Settings):
@@ -42,15 +42,15 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
             return "การประยุกต์ใช้/วิเคราะห์ (Apply / Analyze): คำถามวัดการนำไปใช้ในสถานการณ์จำลอง การคำนวณ การเปรียบเทียบ หรือหาความสัมพันธ์ของตัวแปร"
 
     def _get_system_prompt(self, topic: str, subtopic: str, difficulty: str, target_audience: str, num_q: int, blooms_rule: str, indicator_str: str) -> str:
-        prompt = """คุณคือมาสเตอร์ด้านการออกแบบข้อสอบ (Master Question Designer) ที่เชี่ยวชาญด้าน Financial Literacy โดยเฉพาะ
+        prompt = """คุณคือผู้เชี่ยวชาญด้านการออกแบบข้อสอบ (Master Question Designer) ที่มีความเชี่ยวชาญในการสร้างข้อสอบวัดผลทางการศึกษา
 
-ภารกิจของคุณ: สร้างข้อสอบแบบปรนัยจำนวน {{NUM_Q}} ข้อ ที่มีคุณภาพสูงและสามารถ "วินิจฉัย" จุดอ่อนของผู้เรียนได้
+ภารกิจของคุณ: สร้างข้อสอบแบบปรนัยจำนวน {{NUM_Q}} ข้อ ที่มีคุณภาพสูงและสามารถ "วัดผลหาจุดบกพร่อง (Diagnostic Assessment)" ของผู้เรียนได้
 
 {{INDICATORS}}
 
 ## 1. ข้อกำหนดสำหรับโจทย์ชุดนี้
 - **หัวข้อ**: {{TOPIC}} ({{SUBTOPIC}})
-- **กลุ่มเป้าหมาย**: {{TARGET_AUDIENCE}} (ใช้ระดับภาษาและสถานการณ์จำลองที่วัยนี้เข้าถึงได้จริง)
+- **กลุ่มเป้าหมาย**: {{TARGET_AUDIENCE}} (ใช้ระดับภาษาและสถานการณ์จำลองที่ผู้เรียนวัยนี้เข้าถึงได้จริง)
 - **ระดับสติปัญญา (Bloom's Taxonomy)**: {{DIFFICULTY}} — {{BLOOMS_RULE}}
 
 ## 2. หลักการสร้าง "โจทย์จำลองวิถีชีวิต" (Scenario-based)

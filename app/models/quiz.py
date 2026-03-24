@@ -9,7 +9,7 @@ from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app.db.session import Base
+from app.db.base_class import Base
 
 
 class Quiz(Base):
@@ -20,7 +20,6 @@ class Quiz(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     source_id = Column(UUID(as_uuid=True), ForeignKey("sources.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
 
     # Generation parameters
     learner_level = Column(String(30), nullable=False)  # primary | middle_school | ...
@@ -39,4 +38,3 @@ class Quiz(Base):
     # Relationships
     source = relationship("Source", back_populates="quizzes")
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan", lazy="selectin")
-    attempts = relationship("QuizAttempt", back_populates="quiz", cascade="all, delete-orphan")

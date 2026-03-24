@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.db.session import get_db_session
-from app.models.database_models import QuestionRecord
-from app.services.teacher.export_service import ExportService
+from app.models.question import Question
+from app.services.export_service import ExportService
 
 router = APIRouter(prefix="/exports", tags=["exports"])
 export_service = ExportService()
@@ -16,15 +16,25 @@ async def export_moodle(document_id: str, db: AsyncSession = Depends(get_db_sess
     Exports all approved questions for a document in Moodle XML format.
     """
     result = await db.execute(
-        select(QuestionRecord).where(QuestionRecord.document_id == document_id)
+        select(Question).where(Question.quiz_id == document_id)
     )
     questions = result.scalars().all()
     
     if not questions:
         raise HTTPException(status_code=404, detail="No questions found for this document")
 
-    # Extract payloads for the service
-    payloads = [q.payload for q in questions]
+    # Extract payloads/attributes for the service
+    payloads = []
+    for q in questions:
+        # Construct a payload format that the ExportService expects
+        payloads.append({
+            "id": str(q.id),
+            "stem": q.stem_th,
+            "choices": [{"key": c.choice_key, "text": c.choice_text_th} for c in q.choices],
+            "correct_answer": q.correct_answer_key,
+            "rationale_for_correct_answer": q.rationale_correct_th,
+            "distractor_map": q.distractor_map or {}
+        })
     
     xml_content = export_service.export_to_moodle_xml(payloads, category_name=f"QuizSensei_{document_id}")
     
@@ -42,12 +52,21 @@ async def export_json(document_id: str, db: AsyncSession = Depends(get_db_sessio
     Exports all approved questions for a document in standard JSON format.
     """
     result = await db.execute(
-        select(QuestionRecord).where(QuestionRecord.document_id == document_id)
+        select(Question).where(Question.quiz_id == document_id)
     )
     questions = result.scalars().all()
     
     if not questions:
         raise HTTPException(status_code=404, detail="No questions found for this document")
 
-    payloads = [q.payload for q in questions]
+    payloads = []
+    for q in questions:
+        payloads.append({
+            "id": str(q.id),
+            "stem": q.stem_th,
+            "choices": [{"key": c.choice_key, "text": c.choice_text_th} for c in q.choices],
+            "correct_answer": q.correct_answer_key,
+            "rationale_for_correct_answer": q.rationale_correct_th,
+            "distractor_map": q.distractor_map or {}
+        })
     return export_service.export_to_json_standard(payloads)

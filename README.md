@@ -1,37 +1,35 @@
-# 🎓 QuizSensei: Document-Grounded Diagnostic Assessment Platform
+# 🎓 QuizSensei: Document-Grounded Assessment Platform
 
-**QuizSensei** คือแพลตฟอร์มสร้างข้อสอบอัจฉริยะที่ใช้ระบบ Multi-Agent LLM ในการวิเคราะห์เอกสารและสร้างข้อสอบปรนัย (MCQ) ที่มีคุณภาพสูง โดยเน้นความถูกต้องของเนื้อหา (**Zero Hallucination**) และการให้คำแนะนำเชิงวินิจฉัย (**Diagnostic Feedback**) เพื่อช่วยให้ผู้เรียนเข้าใจจุดที่ควรปรับปรุง
+**QuizSensei** is a sophisticated Multi-Agent LLM platform designed for educators to generate high-quality, document-grounded diagnostic assessments. By leveraging a multi-agent pipeline, it ensures **Zero Hallucination** and provides deep **Diagnostic Feedback** rooted in authorized source material.
 
 ---
 
 ## ✨ Key Features
 
-- 📑 **Source-Grounded Extraction**: รองรับการอัปโหลดไฟล์ PDF, DOCX และ TXT พร้อมระบบสกัดข้อความที่แม่นยำ
-- 🤖 **4-Agent Pipeline**: ระบบ AI 4 ระดับที่ทำงานร่วมกันเพื่อคุณภาพสูงสุด:
-  1. **Analyzer (Agent 1)**: วิเคราะห์เนื้อหาและกำหนดหัวข้อการเรียนรู้
-  2. **Generator (Agent 2)**: สร้างคำถามพร้อมตัวเลือกและคำอธิบาย (Rationales) ในภาษาไทย
-  3. **Auditor (Agent 3)**: ตรวจสอบความถูกต้องและป้องกันการแสดงข้อมูลที่ไม่มีในต้นฉบับ (Hallucination)
-  4. **Grader (Agent 4)**: ตรวจข้อสอบนักเรียนและให้คำแนะนำส่วนบุคคลเชิงโค้ชชิ่ง
-- 🎯 **Diagnostic Assessment**: ข้อสอบที่ออกแบบมาเพื่อค้นหา "ความเข้าใจคลาดเคลื่อน" (Misconceptions) ของผู้เรียน
-- 📱 **3-Panel UI**: หน้าจอการจัดการสำหรับครูที่ใช้งานง่าย (Source List | Viewer | Generator)
-- 🎓 **Student Portal**: อินเตอร์เฟซสำหรับผู้เรียนที่สะอาดตา พร้อมระบบตรวจข้อสอบทันที
-- 🐳 **Dockerized Setup**: ติดตั้งง่ายด้วย Docker Compose ทั้งระบบ Frontend และ Backend
+- 📑 **Source-Grounded Extraction**: High-precision text extraction from PDF, DOCX, and TXT files.
+- 🤖 **3-Agent Teacher Pipeline**:
+  1. **Analyzer**: Performs deep content analysis and identifies key learning indicators.
+  2. **Generator**: Crafts high-quality MCQs with rationales and diagnostic distractor mapping.
+  3. **Auditor**: Validates every question against source evidence to prevent hallucinations.
+- 🎯 **Diagnostic Assessment**: Designed to identify specific student misconceptions through carefully crafted distractors.
+- 📱 **3-Panel Teacher UI**: A streamlined workspace for Source Management, Content Selection, and Quiz Generation.
+- 🐳 **Dockerized Stack**: Seamless deployment via Docker Compose for both Frontend and Backend.
 
 ---
 
 ## 🏗️ Architecture
 
-ระบบสร้างขึ้นด้วยสถาปัตยกรรมที่ทันสมัยและยืดหยุ่น:
-- **Frontend**: [Next.js 15](https://nextjs.org/) (App Router), Tailwind CSS, Zustand
-- **Backend**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.12), SQLAlchemy, Uvicorn
-- **Database**: PostgreSQL (Structured Data), Redis (Task Queue/Caching)
-- **AI Core**: OpenRouter API (รองรับ Gemini Flash และโมเดลชั้นนำอื่นๆ)
+QuizSensei is built with a modern, scalable stack:
+- **Frontend**: [Next.js 15](https://nextjs.org/) (App Router), Tailwind CSS, Zustand.
+- **Backend**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.12), SQLAlchemy 2.0.
+- **Database**: PostgreSQL (Structured Data), Redis (Caching & Task Queue).
+- **AI Core**: OpenRouter API (Default: Gemini 2.0 Flash).
 
 ---
 
 ## 🚀 Quick Start (Docker)
 
-วิธีที่เร็วที่สุดในการรันระบบคือการใช้ Docker:
+To run the full stack locally:
 
 1. **Clone the repository**
    ```bash
@@ -39,8 +37,8 @@
    cd Nectec26
    ```
 
-2. **Set Environment Variables**
-   สร้างไฟล์ `.env` ที่ root directory:
+2. **Configure Environment**
+   Create a `.env` file in the root directory:
    ```env
    OPENROUTER_API_KEY=your_api_key_here
    OPENROUTER_MODEL=google/gemini-2.0-flash-001
@@ -48,15 +46,14 @@
    REDIS_URL=redis://redis:6379/0
    ```
 
-3. **Deploy with Docker Compose**
+3. **Deploy**
    ```bash
    docker-compose up --build
    ```
 
-4. **Access the Application**
-   - **Teacher UI**: [http://localhost:3000](http://localhost:3000)
-   - **Student UI**: [http://localhost:3000/student/[document-id]](http://localhost:3000/student/[document-id])
-   - **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+4. **Access**
+   - **Dashboard**: [http://localhost:3000](http://localhost:3000)
+   - **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
@@ -65,35 +62,28 @@
 ```text
 Nectec26/
 ├── app/                  # FastAPI Backend
-│   ├── core/             # Configuration & LLM Agents
-│   ├── db/               # Database Session & Models
-│   ├── routers/          # API Endpoints (v1)
-│   ├── services/         # Core Logic & 4-Agent Services
+│   ├── core/             # AI Agents & Configuration
+│   ├── models/           # SQLAlchemy Database Models
+│   ├── routers/          # API Endpoints (Teacher API)
+│   ├── services/         # Orchestration & Business Logic
 │   └── main.py           # Application Entry Point
 ├── frontend/             # Next.js Frontend
-│   ├── src/app/          # Pages & Routes
-│   ├── src/components/   # React Components (SourceList, QuizGenerator, etc.)
-│   └── Dockerfile        # Standalone Build Config
-├── docker-compose.yml    # Full Stack Orchestration
-└── README.md             # This file
+│   ├── src/app/          # Application Routes
+│   ├── src/components/   # Modular React Components
+│   └── src/store/        # State Management (Zustand)
+├── docker-compose.yml    # Infrastructure Orchestration
+└── README.md             # Project Documentation
 ```
 
 ---
 
-## 🛠️ Tech Stack & Dependencies
+## 🛠️ Tech Stack
 
-- **Backend**: FastAPI, PyPDF2, python-docx, SQLAlchemy, Pydantic
-- **Frontend**: Next.js, React, Zustand, Heroicons, Tailwind CSS
-- **Infrastructure**: Docker, Docker Compose, PostgreSQL, Redis
-
----
-
-## 🤝 Contributing
-
-ยินดีรับการมีส่วนร่วมเพื่อพัฒนาแพลตฟอร์มนี้! หากคุณพบปัญหาหรือต้องการเสนอความสามารถใหม่ๆ สามารถสร้าง Issue หรือ PR ได้ทันที
+- **Backend**: FastAPI, PyPDF2, python-docx, SQLAlchemy, Pydantic.
+- **Frontend**: Next.js, React, Zustand, Tailwind CSS.
+- **Infrastructure**: Docker, PostgreSQL, Redis.
 
 ---
 
 ## 📄 License
-
-Project นี้จัดทำขึ้นเพื่อวัตถุประสงค์ทางการศึกษาและพัฒนาเทคโนโลยีการศึกษาไทย
+Education and Research Purposes.

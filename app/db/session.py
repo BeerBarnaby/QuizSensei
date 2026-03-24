@@ -4,13 +4,13 @@ Provides engine and session factory for FastAPI.
 """
 from datetime import datetime
 import logging
+from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy.orm import declarative_base
 
 from app.core.config import get_settings
+from app.db.base_class import Base
 
 logger = logging.getLogger(__name__)
-
 settings = get_settings()
 
 # We use asyncpg for FastAPI's native async routing
@@ -29,10 +29,9 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False
 )
 
-# Declarative base class for models to inherit from
-Base = declarative_base()
+# The declarative Base is imported from base_class to prevent circular dependencies
 
-async def get_db_session() -> AsyncSession:
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """Dependency for injecting DB sessions into FastAPI routes."""
     async with AsyncSessionLocal() as session:
         try:

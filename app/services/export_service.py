@@ -32,7 +32,7 @@ class ExportService:
 
         # 2. Process each question
         for q_data in questions:
-            # We assume q_data follows the internal QuestionRecord payload/schema
+            # Assume q_data follows the Question model or its JSON payload
             q_node = ET.SubElement(quiz, "question", {"type": "multichoice"})
             
             # Name
