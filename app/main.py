@@ -70,8 +70,8 @@ app.add_middleware(
 
 
 # ── Routers ────────────────────────────────────────────────────────────────
-app.include_router(documents.router, prefix="/api/v1")
-app.include_router(export.router, prefix="/api/v1")
+app.include_router(documents.router, prefix="/api/v1/teacher")
+app.include_router(export.router, prefix="/api/v1/teacher")
 
 
 # ── Health check ──────────────────────────────────────────────────────────

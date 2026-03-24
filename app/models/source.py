@@ -36,7 +36,7 @@ class Source(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationships
-    user = relationship("User", back_populates="sources")
+    # user = relationship("User", back_populates="sources")  # TODO: Re-enable when User model is created
     documents = relationship("Document", secondary=source_documents, back_populates="sources", lazy="selectin")
     analysis = relationship("SourceAnalysis", back_populates="source", uselist=False, cascade="all, delete-orphan")
     quizzes = relationship("Quiz", back_populates="source", cascade="all, delete-orphan", lazy="selectin")
