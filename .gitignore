@@ -34,3 +34,8 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Docker persistence
+docker/data/
+docker/*.json
+docker/*.log

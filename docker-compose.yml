@@ -11,8 +11,8 @@ services:
       - .env
     environment:
       - UPLOAD_DIR=/app/uploads
-    ports:
-      - "${API_PORT:-8000}:8000"
+    # ports:
+    #   - "${API_PORT:-8000}:8000" # Moved behind Nginx
     volumes:
       - uploads_data:/app/uploads
       - ./app:/app/app:ro
@@ -33,10 +33,22 @@ services:
       dockerfile: Dockerfile
     container_name: quizsensei_frontend
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    # ports:
+    #   - "3000:3000" # Moved behind Nginx
     depends_on:
       - api
+
+  nginx:
+    image: nginx:alpine
+    container_name: quizsensei_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/nginx-default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+      - frontend
 
   db:
     image: postgres:15-alpine
@@ -48,10 +60,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-quizsensei}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quizsensei_secret}
       POSTGRES_DB: ${POSTGRES_DB:-quizsensei_db}
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432" # Keep exposed if needed for local DB tools, or comment out
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./docker/data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-quizsensei} -d ${POSTGRES_DB:-quizsensei_db}" ]
       interval: 10s
@@ -62,10 +74,10 @@ services:
     image: redis:7-alpine
     container_name: quizsensei_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+    # ports:
+    #   - "6379:6379"
     volumes:
-      - redis_data:/data
+      - ./docker/data/redis:/data
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
@@ -75,7 +87,7 @@ services:
 volumes:
   uploads_data:
     driver: local
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
+  # postgres_data: # Switched to bind mounts
+  #   driver: local
+  # redis_data:
+  #   driver: local
