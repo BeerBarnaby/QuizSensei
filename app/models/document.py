@@ -21,7 +21,7 @@ class Document(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     filename = Column(String(500), nullable=False)
-    file_type = Column(String(20), nullable=False)  # pdf, docx, txt, image
+    file_type = Column(String(20), nullable=False)  # pdf, docx, txt
     file_size_bytes = Column(BigInteger, nullable=False, default=0)
     storage_path = Column(String(1000), nullable=False)
 
