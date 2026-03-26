@@ -2,6 +2,7 @@
 
 import { DocumentArrowUpIcon, DocumentTextIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useEffect, useRef, useState } from 'react';
 
 export default function SourceList() {
@@ -10,8 +11,11 @@ export default function SourceList() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const fetchDocuments = async () => {
+    const token = useAuthStore.getState().token;
     try {
-      const res = await fetch('http://localhost:8000/api/v1/teacher/');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/teacher/`, {
+        headers: { ...(token && { 'Authorization': `Bearer ${token}` }) }
+      });
       if (res.ok) {
         const data = await res.json();
         setDocuments(data);
@@ -38,11 +42,14 @@ export default function SourceList() {
 
     const formData = new FormData();
     formData.append('file', file);
+    const token = useAuthStore.getState().token;
+    const authHeader = { ...(token && { 'Authorization': `Bearer ${token}` }) };
 
     try {
       // 1. Upload
-      const uploadRes = await fetch('http://localhost:8000/api/v1/teacher/upload', {
+      const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/teacher/upload`, {
         method: 'POST',
+        headers: authHeader,
         body: formData
       });
       if (!uploadRes.ok) throw new Error("Upload failed");
@@ -53,15 +60,18 @@ export default function SourceList() {
       await fetchDocuments();
 
       // 2. Extract Text
-      const extractRes = await fetch(`http://localhost:8000/api/v1/teacher/${docId}/extract`, { method: 'POST' });
+      const extractRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/teacher/${docId}/extract`, { 
+        method: 'POST', 
+        headers: authHeader 
+      });
       if (!extractRes.ok) throw new Error("Extraction failed");
       
-      const contentRes = await fetch(`http://localhost:8000/api/v1/teacher/${docId}/content`);
+      const contentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/teacher/${docId}/content`, { headers: authHeader });
       const contentData = await contentRes.json();
       setExtractedText(contentData.extracted_text || "");
 
       // 3. Analyze (Agent 1 Gatekeeper)
-      const analyzeRes = await fetch(`http://localhost:8000/api/v1/teacher/${docId}/analyze`, { method: 'POST' });
+      const analyzeRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/teacher/${docId}/analyze`, { method: 'POST', headers: authHeader });
       if (!analyzeRes.ok) throw new Error("Analysis failed");
       const analysisData = await analyzeRes.json();
       setSourceAnalysis(analysisData);
@@ -85,14 +95,16 @@ export default function SourceList() {
 
     try {
       // Try to load text
-      const contentRes = await fetch(`http://localhost:8000/api/v1/teacher/${docId}/content`);
+      const token = useAuthStore.getState().token;
+      const authHeader = { ...(token && { 'Authorization': `Bearer ${token}` }) };
+      const contentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/teacher/${docId}/content`, { headers: authHeader });
       if (contentRes.ok) {
         const contentData = await contentRes.json();
         setExtractedText(contentData.extracted_text || "");
       }
 
       // Try to load analysis
-      const analyzeRes = await fetch(`http://localhost:8000/api/v1/teacher/${docId}/analysis`);
+      const analyzeRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/teacher/${docId}/analysis`, { headers: authHeader });
       if (analyzeRes.ok) {
         const analyzeData = await analyzeRes.json();
         setSourceAnalysis(analyzeData);
@@ -107,8 +119,16 @@ export default function SourceList() {
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900 tracking-tight">QuizSensei</h2>
-        <span className="text-xs bg-blue-100 text-blue-700 font-medium px-2 py-1 rounded-full">Gatekeeper</span>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900 tracking-tight">QuizSensei</h2>
+          <span className="text-xs bg-blue-100 text-blue-700 font-medium px-2 py-1 rounded-full">Gatekeeper</span>
+        </div>
+        <button 
+          onClick={() => useAuthStore.getState().logout()}
+          className="text-xs text-red-600 hover:text-red-800 transition-colors"
+        >
+          ออกจากระบบ
+        </button>
       </div>
       
       <div className="p-4">

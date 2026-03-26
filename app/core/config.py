@@ -15,6 +15,13 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
 
+    # ── Authentication ────────────────────────────────────────────────────
+    SECRET_KEY: str = "super-secret-jwt-key-for-mvp-only"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "quizsensei2026"
+
     UPLOAD_DIR: Path = Path("uploads")
     EXTRACTED_DIR: Path = Path("uploads/extracted")
     ANALYSIS_DIR: Path = Path("uploads/analysis")

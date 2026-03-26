@@ -44,7 +44,7 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
     def _get_system_prompt(self, topic: str, subtopic: str, difficulty: str, target_audience: str, num_q: int, blooms_rule: str, indicator_str: str) -> str:
         prompt = """คุณคือผู้เชี่ยวชาญด้านการออกแบบข้อสอบ (Master Question Designer) ที่มีความเชี่ยวชาญในการสร้างข้อสอบวัดผลทางการศึกษา
 
-ภารกิจของคุณ: สร้างข้อสอบแบบปรนัยจำนวน {{NUM_Q}} ข้อ ที่มีคุณภาพสูงและสามารถ "วัดผลหาจุดบกพร่อง (Diagnostic Assessment)" ของผู้เรียนได้
+ภารกิจของคุณ: สร้างข้อสอบแบบปรนัยจำนวน {{NUM_Q}} ข้อ 
 
 {{INDICATORS}}
 
@@ -56,16 +56,8 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
 ## 2. หลักการสร้าง "โจทย์จำลองวิถีชีวิต" (Scenario-based)
 - อย่าเน้นแค่การถามนิยามตรงๆ (เช่น "X คืออะไร?") 
 - ให้สร้าง **สถานการณ์จำลอง (Scenario)** ให้ผู้เรียนต้องใช้ความรู้ในการแก้ปัญหาหรือตัดสินใจ
-- สำหรับ 'วัยทำงาน' ให้เน้นเคสจริงในออฟฟิศ การบริหารหนี้ หรือการลงทุน
-- สำหรับ 'ประถม/มัธยม' ให้เน้นเคสค่าขนม การซื้อของเล่น หรือกติกาในครอบครัว
 
-## 3. กฎทองของตัวเลือกหลอก (Diagnostic Distractors)
-ตัวเลือกที่ผิดทั้ง 3 ข้อ ต้องมี "ความหมายเชิงวินิจฉัย":
-- **ต้องมาจากความเข้าใจผิด (Misconception)** ที่พบบ่อย: เช่น สับสนระหว่าง "ออมก่อนใช้" กับ "ใช้เหลือค่อยออม"
-- **ต้องน่าดึงดูด (Plausible)**: สำหรับคนที่ยังไม่แม่นเนื้อหาหรือคิดตรรกะแบบผิวเผิน
-- **ต้องตรวจแก้ได้ (Actionable)**: บอกได้ว่าถ้าตอบข้อนี้ แสดงว่าผู้เรียนขาดความรู้เรื่องใดเป็นพิเศษ
-
-## 4. รูปแบบ JSON (Output Format)
+## 3. รูปแบบ JSON (Output Format)
 ### ข้อปฏิบัติที่สำคัญมาก:
 - ตอบกลับเป็น **JSON Array ภายใน Markdown Code Block (```json ... ```) เท่านั้น**
 - **ห้ามมีข้อความเกริ่นนำหรือสรุปปิดท้าย** (No conversation, no filler text)
@@ -90,18 +82,6 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
     "correct_answer": "<A/B/C/D>",
     "rationale_for_correct_answer": "<เหตุผลเชิงวิชาการภาษาไทย>",
     "rationale_for_incorrect_choices": "<คำอธิบายสรุปรวมๆ ว่าทำไมข้ออื่นถึงไม่ถูกต้อง>",
-    "design_reasoning": "<อธิบายว่าคำถามนี้วัดผล Bloom's ตามที่ระบุไว้อย่างไร>",
-    "distractor_map": {
-      "<Key ข้อที่ผิด>": {
-        "misconception": "<ชื่อย่อความเข้าใจผิด>",
-        "why_plausible": "<ทำไมคนถึงเลือกผิดข้อนี้>",
-        "diagnostic_meaning": "<บทสรุปว่านักเรียนขาดความรู้เรื่องใด>",
-        "suggested_review_topic": "<หัวข้อที่ต้องทบทวน>"
-      }
-    },
-    "misconception_tags": ["tag1", "tag2"],
-    "source_evidence": "<อ้างอิงจากเนื้อหาต้นฉบับ>",
-    "why_this_question": "<ความภูมิใจในการออกแบบข้อนี้>",
     "audit_status": "pending",
     "status": "draft"
   }
@@ -161,7 +141,7 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
                 prompt=full_prompt,
                 model=self.model,
                 temperature=0.7,
-                max_tokens=10000
+                max_tokens=4000
             )
             
             if not questions:

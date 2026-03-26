@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { SparklesIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 import { useState } from 'react';
 
@@ -36,12 +37,15 @@ export default function QuizGenerator() {
     setProcessing(true);
     setQuizResult(null);
 
+    const token = useAuthStore.getState().token;
+
     try {
       // Calls Phase 3 Generation API (Agent 2 -> Agent 3 Loop)
-      const res = await fetch(`http://localhost:8000/api/v1/teacher/${currentSourceId}/generate-questions`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/teacher/${currentSourceId}/generate-questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({
           number_of_questions: numQuestions,

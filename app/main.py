@@ -70,8 +70,13 @@ app.add_middleware(
 
 
 # ── Routers ────────────────────────────────────────────────────────────────
-app.include_router(documents.router, prefix="/api/v1/teacher")
-app.include_router(export.router, prefix="/api/v1/teacher")
+from app.core.security import get_current_user
+from fastapi import Depends
+from app.routers import auth
+
+app.include_router(auth.router, prefix="/api/v1/auth")
+app.include_router(documents.router, prefix="/api/v1/teacher", dependencies=[Depends(get_current_user)])
+app.include_router(export.router, prefix="/api/v1/teacher", dependencies=[Depends(get_current_user)])
 
 
 # ── Health check ──────────────────────────────────────────────────────────

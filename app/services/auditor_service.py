@@ -80,10 +80,7 @@ class AuditorAgent(BaseAuditor):
                 "question_id": q.get("question_id"),
                 "stem": q.get("stem"),
                 "choices": q.get("choices"),
-                "correct_answer": q.get("correct_answer"),
-                "design_reasoning": q.get("design_reasoning"),
-                "distractor_map": q.get("distractor_map"),
-                "source_evidence": q.get("source_evidence"),
+                "correct_answer": q.get("correct_answer")
             }
             for q in questions
         ]

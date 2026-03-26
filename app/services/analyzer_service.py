@@ -77,7 +77,7 @@ class LLMDocumentAnalyzer(BaseAnalyzer):
 
     async def analyze(self, text: str) -> Dict[str, Any]:
         """Agent 1 pipeline: classify document and evaluate sufficiency."""
-        max_chars = 30_000
+        max_chars = 15_000
         truncated = text[:max_chars]
 
         import asyncio

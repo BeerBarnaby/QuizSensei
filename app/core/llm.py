@@ -102,7 +102,7 @@ def call_openrouter_json(
     prompt: str,
     model: Optional[str] = None,
     temperature: float = 0.1,
-    max_tokens: int = 8000
+    max_tokens: int = 4000
 ) -> Optional[Union[Dict[str, Any], List[Any]]]:
     """
     Calls LLM with JSON mode enabled via response_format. 

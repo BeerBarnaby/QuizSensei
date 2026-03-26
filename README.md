@@ -1,29 +1,29 @@
 # 🎓 QuizSensei: Document-Grounded Assessment Platform
 
-**QuizSensei** is a sophisticated Multi-Agent LLM platform designed for educators to generate high-quality, document-grounded diagnostic assessments. By leveraging a multi-agent pipeline, it ensures **Zero Hallucination** and provides deep **Diagnostic Feedback** rooted in authorized source material.
+**QuizSensei** is a sophisticated Multi-Agent AI platform designed for educators to generate high-quality, document-grounded diagnostic assessments. By leveraging a multi-agent pipeline, it ensures **Zero Hallucination** and provides deep **Diagnostic Feedback** rooted in authorized source material.
 
 ---
 
 ## ✨ Key Features
 
+- 🔒 **Secure Teacher Dashboard**: JWT-based authentication protecting the entire assessment generation area.
 - 📑 **Source-Grounded Extraction**: High-precision text extraction from PDF, DOCX, and TXT files.
 - 🤖 **3-Agent Teacher Pipeline**:
-  1. **Analyzer**: Performs deep content analysis and identifies key learning indicators.
-  2. **Generator**: Crafts high-quality MCQs with rationales and diagnostic distractor mapping.
-  3. **Auditor**: Validates every question against source evidence to prevent hallucinations.
-- 🎯 **Diagnostic Assessment**: Designed to identify specific student misconceptions through carefully crafted distractors.
-- 📱 **3-Panel Teacher UI**: A streamlined workspace for Source Management, Content Selection, and Quiz Generation.
-- 🐳 **Dockerized Stack**: Seamless deployment via Docker Compose for both Frontend and Backend.
+  1. **Analyzer (Gatekeeper)**: Evaluates uploaded content sufficiency and identifies learning indicators.
+  2. **Generator**: Crafts high-quality MCQs based on specific Bloom's Taxonomy levels and target audiences.
+  3. **Auditor**: Leniently validates AI outputs to ensure quality and prevent hallucinations before reaching the teacher.
+- 📱 **3-Panel Teacher UI**: A streamlined React workspace for Source Management, Content Selection, and Quiz Generation.
+- 🐳 **Dockerized Stack**: Seamless deployment via Docker Compose for both Frontend and Backend, secured in a private bridge network.
 
 ---
 
 ## 🏗️ Architecture
 
 QuizSensei is built with a modern, scalable stack:
-- **Frontend**: [Next.js 15](https://nextjs.org/) (App Router), Tailwind CSS, Zustand.
-- **Backend**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.12), SQLAlchemy 2.0.
-- **Database**: PostgreSQL (Structured Data), Redis (Caching & Task Queue).
-- **AI Core**: OpenRouter API (Default: Gemini 2.0 Flash).
+- **Frontend**: [Next.js 15](https://nextjs.org/) (App Router), Tailwind CSS, Zustand, Next.js Middleware.
+- **Backend**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.12), SQLAlchemy 2.0, Passlib, PyJWT.
+- **Database / Cache**: PostgreSQL, Redis.
+- **AI Core**: OpenRouter API (Default: Google Gemini).
 
 ---
 
@@ -38,21 +38,31 @@ To run the full stack locally:
    ```
 
 2. **Configure Environment**
-   Create a `.env` file in the root directory:
+   Create a `.env` file in the root directory and ensure the authentication variables are set:
    ```env
-   OPENROUTER_API_KEY=your_api_key_here
+   # --- AI Integration ---
+   OPENROUTER_API_KEYS=your_api_key_here
    OPENROUTER_MODEL=google/gemini-2.0-flash-001
-   DATABASE_URL=postgresql+asyncpg://user:password@db:5432/quizsensei
+
+   # --- Database ---
+   POSTGRES_USER=quizsensei
+   POSTGRES_PASSWORD=quizsensei_secret
+   POSTGRES_DB=quizsensei_db
    REDIS_URL=redis://redis:6379/0
+
+   # --- Authentication ---
+   SECRET_KEY=super-secret-jwt-key
+   ADMIN_USERNAME=admin
+   ADMIN_PASSWORD=quizsensei2026
    ```
 
-3. **Deploy**
+3. **Deploy the Platform**
    ```bash
-   docker-compose up --build
+   docker-compose up --build -d
    ```
 
-4. **Access**
-   - **Dashboard**: [http://localhost:3000](http://localhost:3000)
+4. **Access the Application**
+   - **Teacher Dashboard**: [http://localhost:3000](http://localhost:3000) (Login with the Admin credentials above)
    - **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
@@ -62,26 +72,27 @@ To run the full stack locally:
 ```text
 Nectec26/
 ├── app/                  # FastAPI Backend
-│   ├── core/             # AI Agents & Configuration
+│   ├── core/             # AI Agents, Configuration & Security
 │   ├── models/           # SQLAlchemy Database Models
-│   ├── routers/          # API Endpoints (Teacher API)
-│   ├── services/         # Orchestration & Business Logic
+│   ├── routers/          # API Endpoints (Auth & Teacher API)
+│   ├── services/         # Orchestration & LLM Pipeline
 │   └── main.py           # Application Entry Point
 ├── frontend/             # Next.js Frontend
-│   ├── src/app/          # Application Routes
+│   ├── src/app/          # App Router & Authenticated Pages
 │   ├── src/components/   # Modular React Components
-│   └── src/store/        # State Management (Zustand)
-├── docker-compose.yml    # Infrastructure Orchestration
+│   └── src/store/        # State Management (Zustand Auth/App)
+├── docker-compose.yml    # Secure Container Orchestration
 └── README.md             # Project Documentation
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## 🛡️ Security Details
 
-- **Backend**: FastAPI, PyPDF2, python-docx, SQLAlchemy, Pydantic.
-- **Frontend**: Next.js, React, Zustand, Tailwind CSS.
-- **Infrastructure**: Docker, PostgreSQL, Redis.
+This project implements MVP-level security best practices:
+- **Environment Isolation**: Database (Port 5432) and Redis (Port 6379) are hidden from the host machine and accessible only via Docker's internal DNS.
+- **App Router Middleware**: Next.js Edge Middleware prevents unauthorized access to the application root.
+- **JWT Dependencies**: FastAPI endpoints strictly require valid Bearer tokens retrieved from the `/api/v1/auth/login` endpoint.
 
 ---
 
